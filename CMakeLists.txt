@@ -10,7 +10,9 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
 
-add_executable(rene ${SOURCE_FILES})
+add_executable(rene ${SOURCE_FILES}
+        src/cmd.hpp
+        src/cmd.cpp)
 
 target_link_libraries(rene PRIVATE Threads::Threads ZLIB::ZLIB)
 
