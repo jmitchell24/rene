@@ -28,16 +28,25 @@ namespace rene
         using flags_type            = std::unordered_set<std::string>;
         using positional_args_type  = std::vector<std::string>;
 
+        CmdArgs(int argc, char** argv);
+
+        bool valid() const;
+        bool empty() const;
+
         std::string const& programName() const;
-        bool flag(std::string const& s, char c) const;
+        bool flag(std::string const& s) const;
         bool tryGetPositional(size_t index, std::string& value) const;
         bool tryGetNamed(std::string const& name, std::string& value) const;
 
+        template <typename... Args>
+        bool anyFlag(Args&&... args) const
+        { return (flag(args) || ...); }
 
-        void parse(int argc, char** argv);
+        bool parse(int argc, char** argv);
         void dbgPrint();
 
     private:
+        bool                    m_valid;
         std::string             m_program_name;
         positional_args_type    m_positional_args;
         named_args_type         m_named_args;

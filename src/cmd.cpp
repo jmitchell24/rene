@@ -3,6 +3,8 @@
 //
 
 #include "cmd.hpp"
+
+#include "ut/check.hpp"
 using namespace rene;
 
 //
@@ -21,14 +23,36 @@ using namespace std;
 // CmdArgs -> implementation
 //
 
+CmdArgs::CmdArgs(int argc, char** argv) :
+    m_valid{false},
+    m_program_name{}, m_positional_args{},
+    m_named_args{}, m_flags{}
+{
+    parse(argc, argv);
+}
+
+bool CmdArgs::valid() const
+{
+    return m_valid;
+}
+
+bool CmdArgs::empty() const
+{
+    return
+        m_positional_args.empty() &&
+        m_named_args.empty() &&
+        m_flags.empty();
+}
+
+
 string const& CmdArgs::programName() const
 {
     return m_program_name;
 }
 
-bool CmdArgs::flag(string const& s, char c) const
+bool CmdArgs::flag(string const& s) const
 {
-    return m_flags.contains(s) || m_flags.contains(string(1, c));
+    return m_flags.contains(s);
 }
 
 bool CmdArgs::parse(int argc, char** argv)
@@ -37,13 +61,22 @@ bool CmdArgs::parse(int argc, char** argv)
     named_args_type nargs;
     string pname;
 
-    if (argc < 1)
-        return false;
+    m_positional_args.clear();
+    m_named_args.clear();
+    m_flags.clear();
+    m_valid = false;
 
+    if (argc < 1)
+    {
+        return false;
+    }
+
+    check_null(argv[0]);
     pname = argv[0];
 
     for (size_t i = 1; i < argc; ++i)
     {
+        check_null(argv[i]);
         auto arg = cstrview(argv[i]);
 
         if (arg.beginsWith("--"))
@@ -72,11 +105,16 @@ bool CmdArgs::parse(int argc, char** argv)
     m_program_name      = pname;
     m_positional_args   = move(pargs);
     m_named_args        = move(nargs);
+    m_valid             = true;
     return true;
 }
 
 void CmdArgs::dbgPrint()
 {
+    using namespace ut::tui;
+
+
+
     cout << endl;
     cout << TERM_FG_BRIGHT_BLUE << "  program name: " << TERM_RESET << m_program_name << endl;
     cout << TERM_FG_BRIGHT_BLUE << "  positional: " << TERM_RESET << endl;
@@ -96,3 +134,29 @@ void CmdArgs::dbgPrint()
         cout << "    " << TERM_FG_BRIGHT_YELLOW << it << TERM_RESET << endl;
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
