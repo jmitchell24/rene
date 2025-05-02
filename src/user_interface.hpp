@@ -24,20 +24,22 @@ namespace rene
 {
     using itemlist_type = std::vector<std::string>;
 
-    class UserInterface : ftxui::ComponentBase
+    class UserInterface final : public ftxui::ComponentBase
     {
     public:
-        UserInterface(itemlist_type const& items);
-
+        explicit UserInterface(ftxui::Closure exit_closure);
+        ~UserInterface() override;
         void Refresh();
 
         int GetSelectedIndex() const;
 
         ftxui::Component createComponent();
 
-        ftxui::Element Render() const;
+        //ftxui::Element Render() const;
 
-        bool OnEvent(ftxui::Event event);
+
+        ftxui::Element OnRender() override;
+        bool OnEvent(ftxui::Event event) override;
 
     private:
         itemlist_type m_items_left;
@@ -56,3 +58,4 @@ namespace rene
         //ftxui::Component m_container;
     };
 }
+

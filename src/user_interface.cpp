@@ -173,20 +173,16 @@ int match_score(const std::string& str, const std::string& query) {
 //
 
 
-UserInterface::UserInterface(itemlist_type const& items)
-    : m_items_left(items), m_selected(0)
+UserInterface::UserInterface(Closure exit_closure)
+    : m_exit_closure{exit_closure}
 {
-    m_filtered_items = m_items_left;
-    m_items_right = m_items_left;
-
-    m_indices.resize(m_items_left.size());
-
-    for (size_t i = 0; i < m_items_left.size(); ++i)
-        m_indices[i] = i;
-
-    // Create components
-    m_input = Input(&m_query, "");
-
+    // m_filtered_items = m_items_left;
+    // m_items_right = m_items_left;
+    //
+    // m_indices.resize(m_items_left.size());
+    //
+    // for (size_t i = 0; i < m_items_left.size(); ++i)
+    //     m_indices[i] = i;
 
     // Create menu component
     // Component menu = Container::Vertical({});
@@ -198,9 +194,69 @@ UserInterface::UserInterface(itemlist_type const& items)
     // });
 
     //m_container = container;
-    Refresh();
+    //Refresh();
+
+
+
+
+
+    //
+    // SETUP COMPONENTS
+    //
+
+    // Create components with flex_grow to fill available space
+    auto right = Renderer([] {
+        return text("right") | center | border | flex_grow;
+    });
+
+    auto left = Renderer([] {
+        return text("left") | center | border | flex_grow;
+    });
+
+    auto input_field = Input(&m_query, "Enter text here...");
+    auto input_component = Renderer(input_field, [&] {
+        return input_field->Render() | border;
+    });
+
+    // Initialize split sizes
+    int left_size = 20;
+    int right_size = 20;
+
+    // Create a resizable split that will grow to fill available space
+    auto split = ResizableSplitLeft(left, right, &left_size);
+    auto split_with_flex = Renderer(split, [&] {
+        return split->Render() | flex_grow;
+    });
+
+    // Create the main container with the split on top and input at bottom
+    auto container = Container::Vertical({
+        split_with_flex,
+        input_component
+    });
+
+    // Create the final renderer
+    auto renderer = Renderer(container, [&] {
+        return container->Render();
+    });
+
+    Add(renderer);
+
+
+
+
+
+
+
+
+
+
+
 }
 
+UserInterface::~UserInterface()
+{
+    //
+}
 
 
 void UserInterface::Refresh()
@@ -277,124 +333,128 @@ int UserInterface::GetSelectedIndex() const
     return m_selected_item;
 }
 
-
-
-Element UserInterface::Render() const
+Element UserInterface::OnRender()
 {
 
-
-    // Show prompt and input
-    Elements prompt_elements;
-    prompt_elements.push_back(text("> ") | color(Color::Green) | bold);
-    prompt_elements.push_back(text(m_query));
-    prompt_elements.push_back(text("_") | blink);
-
-    Element prompt = hbox(prompt_elements);
-
-    // Show number of matches
-    Element matches_counter = text("") | color(Color::GrayDark);
-    if (!m_items_left.empty())
-    {
-        string counter = to_string(m_filtered_items.size()) + "/" +
-                              to_string(m_items_left.size());
-        matches_counter = text(counter) | color(Color::GrayDark);
-    }
-
-    // Format menu entries
-    Elements menu_entries;
-    for (size_t i = 0; i < m_filtered_items.size(); ++i)
-    {
-        bool is_selected = (i == m_selected);
-
-        Elements line;
-        Elements highlighted = highlight_match(m_filtered_items[i], m_query);
-
-        if (is_selected)
-        {
-            line.push_back(text("> ") | color(Color::Green) | bold);
-            Element line_content = hbox(highlighted);
-            line.push_back(line_content | inverted);
-            menu_entries.push_back(hbox(line) | focus);
-        }
-        else
-        {
-            line.push_back(text("  "));
-            Element line_content = hbox(highlighted);
-            line.push_back(line_content);
-            menu_entries.push_back(hbox(line));
-        }
-
-
-    }
-
-    // Calculate max height (limit to 10 items)
-    size_t max_height = std::min(m_filtered_items.size(), size_t(10));
-
-    Element menu;
-    if (menu_entries.empty())
-        menu = text("No matches") | color(Color::GrayDark);
-    else
-        menu = vbox(menu_entries)  | vscroll_indicator | yframe;
-
-
-
-    // Header with stats
-    Element header = hbox({
-        prompt,
-        filler(),
-        matches_counter
-    });
-
-    int left_size = 10;
-    auto _left = Renderer([]{ return text("left") | center; });
-    auto _right = Renderer([]{ return text("right") | center; });
-
-    return vbox({
-        header ,
-        separator(),
-        menu
-    });
 }
 
-Component UserInterface::createComponent()
-{
 
-    // Create components with flex_grow to fill available space
-    auto right = Renderer([] {
-        return text("right") | center | border | flex_grow;
-    });
+// Element UserInterface::Render() const
+// {
+//
+//
+//     // Show prompt and input
+//     Elements prompt_elements;
+//     prompt_elements.push_back(text("> ") | color(Color::Green) | bold);
+//     prompt_elements.push_back(text(m_query));
+//     prompt_elements.push_back(text("_") | blink);
+//
+//     Element prompt = hbox(prompt_elements);
+//
+//     // Show number of matches
+//     Element matches_counter = text("") | color(Color::GrayDark);
+//     if (!m_items_left.empty())
+//     {
+//         string counter = to_string(m_filtered_items.size()) + "/" +
+//                               to_string(m_items_left.size());
+//         matches_counter = text(counter) | color(Color::GrayDark);
+//     }
+//
+//     // Format menu entries
+//     Elements menu_entries;
+//     for (size_t i = 0; i < m_filtered_items.size(); ++i)
+//     {
+//         bool is_selected = (i == m_selected);
+//
+//         Elements line;
+//         Elements highlighted = highlight_match(m_filtered_items[i], m_query);
+//
+//         if (is_selected)
+//         {
+//             line.push_back(text("> ") | color(Color::Green) | bold);
+//             Element line_content = hbox(highlighted);
+//             line.push_back(line_content | inverted);
+//             menu_entries.push_back(hbox(line) | focus);
+//         }
+//         else
+//         {
+//             line.push_back(text("  "));
+//             Element line_content = hbox(highlighted);
+//             line.push_back(line_content);
+//             menu_entries.push_back(hbox(line));
+//         }
+//
+//
+//     }
+//
+//     // Calculate max height (limit to 10 items)
+//     size_t max_height = std::min(m_filtered_items.size(), size_t(10));
+//
+//     Element menu;
+//     if (menu_entries.empty())
+//         menu = text("No matches") | color(Color::GrayDark);
+//     else
+//         menu = vbox(menu_entries)  | vscroll_indicator | yframe;
+//
+//
+//
+//     // Header with stats
+//     Element header = hbox({
+//         prompt,
+//         filler(),
+//         matches_counter
+//     });
+//
+//     int left_size = 10;
+//     auto _left = Renderer([]{ return text("left") | center; });
+//     auto _right = Renderer([]{ return text("right") | center; });
+//
+//     return vbox({
+//         header ,
+//         separator(),
+//         menu
+//     });
+// }
 
-    auto left = Renderer([] {
-        return text("left") | center | border | flex_grow;
-    });
-
-    auto input_field = Input(&m_query, "Enter text here...");
-    auto input_component = Renderer(input_field, [&] {
-        return input_field->Render() | border;
-    });
-
-    // Initialize split sizes
-    int left_size = 20;
-
-    // Create a resizable split that will grow to fill available space
-    auto split = ResizableSplitLeft(left, right, &left_size);
-    auto split_with_flex = Renderer(split, [&] {
-        return split->Render() | flex_grow;
-    });
-
-    // Create the main container with the split on top and input at bottom
-    auto container = Container::Vertical({
-        split_with_flex,
-        input_component
-    });
-
-    // Create the final renderer
-    auto renderer = Renderer(container, [&] {
-        return container->Render();
-    });
-
-    return renderer;
-}
+// Component UserInterface::createComponent()
+// {
+//
+//     // Create components with flex_grow to fill available space
+//     auto right = Renderer([] {
+//         return text("right") | center | border | flex_grow;
+//     });
+//
+//     auto left = Renderer([] {
+//         return text("left") | center | border | flex_grow;
+//     });
+//
+//     auto input_field = Input(&m_query, "Enter text here...");
+//     auto input_component = Renderer(input_field, [&] {
+//         return input_field->Render() | border;
+//     });
+//
+//     // Initialize split sizes
+//     int left_size = 20;
+//
+//     // Create a resizable split that will grow to fill available space
+//     auto split = ResizableSplitLeft(left, right, &left_size);
+//     auto split_with_flex = Renderer(split, [&] {
+//         return split->Render() | flex_grow;
+//     });
+//
+//     // Create the main container with the split on top and input at bottom
+//     auto container = Container::Vertical({
+//         split_with_flex,
+//         input_component
+//     });
+//
+//     // Create the final renderer
+//     auto renderer = Renderer(container, [&] {
+//         return container->Render();
+//     });
+//
+//     return renderer;
+// }
 
 
 bool UserInterface::OnEvent(Event event)
@@ -406,32 +466,34 @@ bool UserInterface::OnEvent(Event event)
         return true;
     }
 
+    return ComponentBase::OnEvent(event);
+
     // Handle navigation
-    if (event.is_mouse() || m_filtered_items.empty())
-    {
-        return false;
-    }
-
-    if (event == Event::ArrowDown || event == Event::Tab)
-    {
-        m_selected = (m_selected + 1) % m_filtered_items.size();
-        m_selected_item = m_indices[m_selected];
-        return true;
-    }
-
-    if (event == Event::ArrowUp || event == Event::TabReverse)
-    {
-        m_selected = (m_selected + m_filtered_items.size() - 1) % m_filtered_items.size();
-        m_selected_item = m_indices[m_selected];
-        return true;
-    }
-
-    if (event == Event::Return && !m_filtered_items.empty())
-    {
-        m_selected_item = m_indices[m_selected];
-        return true;
-    }
-
-    return false;
+    // if (event.is_mouse() || m_filtered_items.empty())
+    // {
+    //     return false;
+    // }
+    //
+    // if (event == Event::ArrowDown || event == Event::Tab)
+    // {
+    //     m_selected = (m_selected + 1) % m_filtered_items.size();
+    //     m_selected_item = m_indices[m_selected];
+    //     return true;
+    // }
+    //
+    // if (event == Event::ArrowUp || event == Event::TabReverse)
+    // {
+    //     m_selected = (m_selected + m_filtered_items.size() - 1) % m_filtered_items.size();
+    //     m_selected_item = m_indices[m_selected];
+    //     return true;
+    // }
+    //
+    // if (event == Event::Return && !m_filtered_items.empty())
+    // {
+    //     m_selected_item = m_indices[m_selected];
+    //     return true;
+    // }
+    //
+    // return false;
 }
 
