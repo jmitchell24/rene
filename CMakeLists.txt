@@ -6,7 +6,9 @@ set(CMAKE_CXX_STANDARD 23) # Enable the C++23 standard
 
 
 file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.hpp)
-add_executable(rene ${SOURCE_FILES})
+add_executable(rene ${SOURCE_FILES}
+        src/user_interface.hpp
+        src/user_interface.cpp)
 
 #
 # my ut library

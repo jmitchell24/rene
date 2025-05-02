@@ -1,61 +1,45 @@
 //
-// Created by james on 30/04/25.
+// Created by james on 02/05/25.
 //
 
-#pragma once
-
-
-
 //
-// ftxui
+// ut
 //
-#include <ftxui/component/component.hpp>
-#include <ftxui/component/screen_interactive.hpp>
-#include <ftxui/dom/elements.hpp>
-#include <ftxui/component/component_options.hpp>
+#include <ut/func.hpp>
 
 //
 // std
 //
-#include <vector>
 #include <string>
+
 
 namespace rene
 {
-    using itemlist_type = std::vector<std::string>;
+    struct RenameArgs
+    {
+        size_t index;
+        std::string filename;
+    };
 
-    class UserInterface final : public ftxui::ComponentBase
+    using renamer_type = ut::func<std::string(RenameArgs const&)>;
+
+
+    class UserInterface
     {
     public:
-        explicit UserInterface(ftxui::Closure exit_closure);
-        ~UserInterface() override;
-        void Refresh();
 
-        int GetSelectedIndex() const;
+        std::string const& expression() const;
 
-        ftxui::Component createComponent();
-
-        //ftxui::Element Render() const;
-
-
-        ftxui::Element OnRender() override;
-        bool OnEvent(ftxui::Event event) override;
+        int run(renamer_type renamer);
+        static UserInterface& instance();
 
     private:
-        itemlist_type m_items_left;
-        itemlist_type m_items_right;
+        UserInterface();
 
-        itemlist_type m_filtered_items;
-        std::vector<size_t> m_indices;
-        std::string m_query;
-        size_t m_selected;
-        int m_selected_item = -1;
-
-        ftxui::Component m_input;
-        ftxui::Component m_split;
-        ftxui::Closure m_exit_closure;
-        //ftxui::Component m_menu;
-        //ftxui::Component m_container;
+        void updateRightList(renamer_type renamer);
     };
-}
 
+
+    [[maybe_unused]]
+    static UserInterface& UI = UserInterface::instance();
+}

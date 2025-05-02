@@ -1,499 +1,353 @@
 //
-// Created by james on 30/04/25.
+// Created by james on 02/05/25.
 //
 
+//
+// rene
+//
 #include "user_interface.hpp"
 using namespace rene;
 
 //
 // ftxui
 //
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/screen_interactive.hpp>
+#include <ftxui/dom/elements.hpp>
+#include <ftxui/component/component_options.hpp>
 using namespace ftxui;
+
+
+
+
+//
+// ut
+//
+// using namespace ut;
 
 //
 // std
 //
+#include <cstdlib>
 using namespace std;
+static vector<string> getTestItems()
+{
+    // Return some demo items if file reading fails
+    return {
 
-//
-//
-//
+        "user.rb",
+        "users_controller.rb",
+        "index.html.erb",
+        "show.html.erb",
+        "new.html.erb",
+        "edit.html.erb",
+        "post.rb",
+        "posts_controller.rb",
+        "comment.rb",
+        "comments_controller.rb",
+        "category.rb",
+        "categories_controller.rb",
+        "tag.rb",
+        "tags_controller.rb",
+        "profile.rb",
+        "profiles_controller.rb",
+        "attachment.rb",
+        "attachments_controller.rb",
+        "notification.rb",
+        "notifications_controller.rb",
+        "message.rb",
+        "messages_controller.rb",
+        "subscription.rb",
+        "subscriptions_controller.rb",
+        "application_helper.rb",
+        "application.html.erb",
+        "dashboard.html.erb",
+        "admin.rb",
+        "admins_controller.rb",
+        "event.rb",
+        "events_controller.rb",
+        "product.rb",
+        "products_controller.rb",
+        "order.rb",
+        "orders_controller.rb",
+        "invoice.rb",
+        "invoices_controller.rb",
+        "session_controller.rb",
+        "authentication.rb",
+        "mailer.rb",
+        "seed.rb",
+        "routes.rb",
+        "schema.rb",
+        "database.yml",
+        "Gemfile",
+        "Rakefile",
+        "application.rb",
+        "environment.rb",
+        "boot.rb",
+        "development.rb"
 
-// Convert string to lowercase for case-insensitive matching
-std::string to_lower(const std::string& str) {
-    std::string result = str;
-    std::transform(result.begin(), result.end(), result.begin(),
-                  [](unsigned char c) { return std::tolower(c); });
-    return result;
+  };
 }
 
-// Highlight matching characters in the string
-Elements highlight_match(const std::string& str, const std::string& query) {
-    Elements result;
+string g_query = "";
+vector<string> g_list_left = getTestItems();
+vector<string> g_list_right = g_list_left;
+int g_selected_index = 0;
 
-    if (query.empty()) {
-        result.push_back(text(str));
-        return result;
-    }
+#include <sstream>
 
-    std::string str_lower = to_lower(str);
-    std::string query_lower = to_lower(query);
+static Elements createItemElements(vector<string> const& items, int selected_index, bool prefix)
+{
+    Elements el;
+    for (size_t i = 0; i < items.size(); ++i)
+    {
+        bool is_selected = (i == selected_index);
+        auto&& it = items[i];
 
-    size_t pos = str_lower.find(query_lower);
-
-    if (pos == std::string::npos) {
-        // No exact match, try to find individual characters
-        std::vector<bool> matched(str.size(), false);
-        size_t query_idx = 0;
-
-        for (size_t i = 0; i < str.size() && query_idx < query.size(); ++i) {
-            if (std::tolower(str[i]) == std::tolower(query[query_idx])) {
-                matched[i] = true;
-                query_idx++;
+        if (is_selected)
+        {
+            if (prefix)
+            {
+                ostringstream oss;
+                oss << "(" << (i+1) << "/" << items.size() << "> ";
+                el.push_back(hbox({
+                    text(oss.str()) | color(Color::Green) | bold,
+                    text(it) | inverted
+                }) | notflex | focus);
             }
-        }
-
-        if (query_idx == query.size()) {
-            // All characters matched
-            std::string current;
-            bool is_highlighted = false;
-
-            for (size_t i = 0; i < str.size(); ++i) {
-                if (matched[i] != is_highlighted) {
-                    if (!current.empty()) {
-                        result.push_back(is_highlighted
-                            ? text(current) | color(Color::Green) | bold
-                            : text(current));
-                        current.clear();
-                    }
-                    is_highlighted = matched[i];
-                }
-                current += str[i];
+            else
+            {
+                el.push_back(hbox({
+                    text(" "),
+                    text(it) | inverted
+                }) | notflex | focus);
             }
 
-            if (!current.empty()) {
-                result.push_back(is_highlighted
-                    ? text(current) | color(Color::Green) | bold
-                    : text(current));
-            }
-        } else {
-            result.push_back(text(str));
         }
-    } else {
-        // Exact match found
-        if (pos > 0) {
-            result.push_back(text(str.substr(0, pos)));
-        }
-        result.push_back(text(str.substr(pos, query.size())) | color(Color::Green) | bold);
-        if (pos + query.size() < str.size()) {
-            result.push_back(text(str.substr(pos + query.size())));
+        else
+        {
+            el.push_back(hbox({
+                text(" "),
+                text(it)
+            }) | notflex);
         }
     }
 
-    return result;
+
+    return el;
 }
 
-// Check if a string matches the query (fuzzy match)
-bool fuzzy_match(const std::string& str, const std::string& query) {
-    if (query.empty()) {
-        return true;
-    }
 
-    std::string str_lower = to_lower(str);
-    std::string query_lower = to_lower(query);
+/// @brief Display a vertical scrollbar to the right.
+/// colors.
+/// @ingroup dom
+Element my_vscroll_indicator(Element child) {
+    class Impl : public Node {
+    public:
+        explicit Impl(Element child) : Node(unpack(std::move(child))) {}
 
-    if (str_lower.find(query_lower) != std::string::npos) {
-        return true;
-    }
+        void ComputeRequirement() override
+        {
+            Node::ComputeRequirement();
+            requirement_ = children_[0]->requirement();
+            requirement_.min_x++;
+        }
 
-    // Check for subsequence match
-    size_t str_idx = 0;
-    for (char qc : query_lower) {
-        bool found = false;
-        while (str_idx < str_lower.size()) {
-            if (str_lower[str_idx++] == qc) {
-                found = true;
-                break;
+        void SetBox(Box box) override
+        {
+            box_ = box;
+            box.x_min++;
+            children_[0]->SetBox(box);
+        }
+
+        void Render(Screen& screen) final
+        {
+            Node::Render(screen);
+
+            Box const& stencil = screen.stencil;
+
+            int size_inner = box_.y_max - box_.y_min;
+            if (size_inner <= 0)
+                return;
+
+            int size_outer = stencil.y_max - stencil.y_min + 1;
+            if (size_outer >= size_inner)
+                return;
+
+            int size = 2 * size_outer * size_outer / size_inner;
+            size = std::max(size, 1);
+
+            int start_y =
+                2 * stencil.y_min +  //
+                2 * (stencil.y_min - box_.y_min) * size_outer / size_inner;
+
+            int x = stencil.x_min;
+            for (int y = stencil.y_min; y <= stencil.y_max; ++y)
+            {
+                int  y_up   = 2 * y + 0;
+                int  y_down = 2 * y + 1;
+                bool up     = (start_y <= y_up) && (y_up <= start_y + size);
+                bool down   = (start_y <= y_down) && (y_down <= start_y + size);
+
+                char const* c = up ? (down ? "┃" : "╹") : (down ? "╻" : " ");  // NOLINT
+                screen.PixelAt(x, y).character = c;
+                screen.PixelAt(x, y).foreground_color = Color::Red;
             }
         }
-        if (!found) {
-            return false;
-        }
-    }
-
-    return true;
+    };
+    return std::make_shared<Impl>(std::move(child));
 }
 
-// Calculate match score (lower is better)
-int match_score(const std::string& str, const std::string& query) {
-    if (query.empty()) {
-        return 0;
-    }
+#define TYPE_RE std::function<Element()>
+#define TYPE_EV std::function<bool(Event)>
+Component RenderEvent(TYPE_RE render, TYPE_EV event) {
+    class Impl : public ComponentBase {
+    public:
+        explicit Impl(TYPE_RE render, TYPE_EV event)
+            : render_(move(render)), event_(move(event)) {}
+        Element OnRender() override { return render_(); }
+        bool OnEvent(Event e) override { return event_(e); }
+        TYPE_RE render_; TYPE_EV event_;
+    };
 
-    std::string str_lower = to_lower(str);
-    std::string query_lower = to_lower(query);
-
-    // Exact match is best
-    size_t exact_pos = str_lower.find(query_lower);
-    if (exact_pos != std::string::npos) {
-        return exact_pos; // Prefer matches at the start
-    }
-
-    // Calculate subsequence match distance
-    int score = 1000;
-    size_t last_match_pos = 0;
-    size_t total_distance = 0;
-    bool found_all = true;
-
-    for (char qc : query_lower) {
-        bool found = false;
-        for (size_t i = last_match_pos; i < str_lower.size(); ++i) {
-            if (str_lower[i] == qc) {
-                total_distance += (i - last_match_pos);
-                last_match_pos = i + 1;
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            found_all = false;
-            break;
-        }
-    }
-
-    if (found_all) {
-        score = 500 + total_distance;
-    }
-
-    return score;
+    return Make<Impl>(move(render), move(event));
 }
+#undef TYPE_RE
+#undef TYPE_EV
 
 //
 // UserInterface -> Implementation
 //
 
+UserInterface::UserInterface()
+{}
 
-UserInterface::UserInterface(Closure exit_closure)
-    : m_exit_closure{exit_closure}
+string const& UserInterface::expression() const
 {
-    // m_filtered_items = m_items_left;
-    // m_items_right = m_items_left;
-    //
-    // m_indices.resize(m_items_left.size());
-    //
-    // for (size_t i = 0; i < m_items_left.size(); ++i)
-    //     m_indices[i] = i;
+    return g_query;
+}
 
-    // Create menu component
-    // Component menu = Container::Vertical({});
-    //m_menu = menu;
+void UserInterface::updateRightList(renamer_type renamer)
+{
+    g_list_right.clear();
+    for (size_t i = 0; i < g_list_left.size(); ++i)
+    {
+        RenameArgs ra {
+            .index = i,
+            .filename = g_list_left[i],
+        };
 
-    // auto container = Container::Horizontal({
-    //     m_input,
-    //     m_menu
-    // });
+        g_list_right.push_back(renamer(ra));
+    }
 
-    //m_container = container;
-    //Refresh();
+}
 
-
-
+int UserInterface::run(renamer_type renamer)
+{
+    auto screen = ScreenInteractive::Fullscreen();
 
 
-    //
-    // SETUP COMPONENTS
-    //
+    updateRightList(renamer);
 
-    // Create components with flex_grow to fill available space
+    // Create the list components
     auto right = Renderer([] {
-        return text("right") | center | border | flex_grow;
+        return vbox(createItemElements(g_list_right, g_selected_index, false)) | frame | notflex;
     });
 
     auto left = Renderer([] {
-        return text("left") | center | border | flex_grow;
+        return vbox(createItemElements(g_list_left, g_selected_index, true)) | my_vscroll_indicator | frame | notflex;
     });
 
-    auto input_field = Input(&m_query, "Enter text here...");
+    // Create the input component with fixed height
+    auto input_field = Input(&g_query, "expression", {
+        .transform = [](InputState state) {
+
+            state.element |= color(Color::White);
+
+            if (state.is_placeholder)   state.element |= dim;
+            if (state.hovered)          state.element |= bgcolor(Color::GrayDark);
+
+            return state.element;
+          },
+        .multiline = false,
+        .on_change = [&]{ updateRightList(renamer); }
+
+    });
+
     auto input_component = Renderer(input_field, [&] {
-        return input_field->Render() | border;
+        return vbox({
+            hbox({
+                text("> ") | color(Color::Green) | bold,
+                input_field->Render(),
+            }),
+            hbox({
+                text("rené 25.5.2") | dim,
+                separatorEmpty(),
+                text("/path/to/files") | color(Color::OrangeRed1),
+                separatorEmpty(),
+                text("opt1=yes") | color(Color::GreenYellow),
+                separatorEmpty(),
+                text("opt2=123") | color(Color::GreenYellow),
+                separatorEmpty(),
+                text("opt3='...'") | color(Color::GreenYellow),
+                separatorEmpty(),
+            })
+        }) | border;
     });
 
     // Initialize split sizes
-    int left_size = 20;
-    int right_size = 20;
+    int left_size = 50;
 
-    // Create a resizable split that will grow to fill available space
+    // First construct the resizable split
     auto split = ResizableSplitLeft(left, right, &left_size);
-    auto split_with_flex = Renderer(split, [&] {
-        return split->Render() | flex_grow;
-    });
 
-    // Create the main container with the split on top and input at bottom
-    auto container = Container::Vertical({
-        split_with_flex,
-        input_component
-    });
+    // Create a component structure where the lists can be scrolled/resized
+    // but the input field is fixed at the bottom with a guaranteed minimum height
 
-    // Create the final renderer
-    auto renderer = Renderer(container, [&] {
-        return container->Render();
-    });
+    auto fn_render = [&] {
+        return vbox({
+            split->Render() | flex,
+            input_component->Render()
+        }) | flex;
+    };
 
-    Add(renderer);
-
-
-
-
-
-
-
-
-
-
-
-}
-
-UserInterface::~UserInterface()
-{
-    //
-}
-
-
-void UserInterface::Refresh()
-{
-    // Filter items based on query
-    m_filtered_items.clear();
-    m_indices.clear();
-
-    if (m_query.empty())
+    auto fn_event = [&](Event e)
     {
-        m_filtered_items = m_items_left;
-        m_indices.resize(m_items_left.size());
-        for (size_t i = 0; i < m_items_left.size(); ++i)
+        if (e == Event::Escape || e == Event::q)
         {
-            m_indices[i] = i;
+            screen.Exit();
+            return true;
         }
-    }
-    else
-    {
-        vector<pair<int, size_t>> scored_items;
-        for (size_t i = 0; i < m_items_left.size(); ++i)
+
+        if (e == Event::ArrowUp)
         {
-            if (fuzzy_match(m_items_left[i], m_query))
+            if (g_selected_index > 0)
+                --g_selected_index;
+            return true;
+        }
+
+        if (e == Event::ArrowDown)
+        {
+            if (g_selected_index < g_list_left.size()-1)
             {
-                int score = match_score(m_items_left[i], m_query);
-                scored_items.push_back({score, i});
+                ++g_selected_index;
             }
+            return true;
         }
 
-        // Sort by score
-        sort(scored_items.begin(), scored_items.end());
 
-        for (const auto& pair : scored_items)
-        {
-            m_filtered_items.push_back(m_items_left[pair.second]);
-            m_indices.push_back(pair.second);
-        }
-    }
+        if (input_field->OnEvent(e))
+            return true;
+        return split->OnEvent(e);
+    };
 
-    // Adjust selection if needed
-    if (m_filtered_items.empty())
-    {
-        m_selected = 0;
-    }
-    else if (m_selected >= m_filtered_items.size())
-    {
-        m_selected = m_filtered_items.size() - 1;
-    }
-
-    // Create menu elements
-    // Components items;
-    // for (size_t i = 0; i < m_filtered_items.size(); ++i)
-    // {
-    //     bool is_selected = (i == m_selected);
-    //
-    //     auto on_enter = [this, i]
-    //     {
-    //         m_selected = i;
-    //         m_selected_item = m_indices[i];
-    //         return true;
-    //     };
-    //
-    //     items.push_back(Button("", on_enter, ButtonOption::Ascii()));
-    // }
-
-    // m_menu->DetachAllChildren();
-    // for (auto&& it: items)
-    //     m_menu->Add(it);
-    //menu_->Add(Container::Vertical(items));
+    screen.Loop(RenderEvent(fn_render, fn_event));
+    return EXIT_SUCCESS;
 }
 
-int UserInterface::GetSelectedIndex() const
+
+UserInterface& UserInterface::instance()
 {
-    return m_selected_item;
+    static UserInterface x;
+    return x; 
 }
-
-Element UserInterface::OnRender()
-{
-
-}
-
-
-// Element UserInterface::Render() const
-// {
-//
-//
-//     // Show prompt and input
-//     Elements prompt_elements;
-//     prompt_elements.push_back(text("> ") | color(Color::Green) | bold);
-//     prompt_elements.push_back(text(m_query));
-//     prompt_elements.push_back(text("_") | blink);
-//
-//     Element prompt = hbox(prompt_elements);
-//
-//     // Show number of matches
-//     Element matches_counter = text("") | color(Color::GrayDark);
-//     if (!m_items_left.empty())
-//     {
-//         string counter = to_string(m_filtered_items.size()) + "/" +
-//                               to_string(m_items_left.size());
-//         matches_counter = text(counter) | color(Color::GrayDark);
-//     }
-//
-//     // Format menu entries
-//     Elements menu_entries;
-//     for (size_t i = 0; i < m_filtered_items.size(); ++i)
-//     {
-//         bool is_selected = (i == m_selected);
-//
-//         Elements line;
-//         Elements highlighted = highlight_match(m_filtered_items[i], m_query);
-//
-//         if (is_selected)
-//         {
-//             line.push_back(text("> ") | color(Color::Green) | bold);
-//             Element line_content = hbox(highlighted);
-//             line.push_back(line_content | inverted);
-//             menu_entries.push_back(hbox(line) | focus);
-//         }
-//         else
-//         {
-//             line.push_back(text("  "));
-//             Element line_content = hbox(highlighted);
-//             line.push_back(line_content);
-//             menu_entries.push_back(hbox(line));
-//         }
-//
-//
-//     }
-//
-//     // Calculate max height (limit to 10 items)
-//     size_t max_height = std::min(m_filtered_items.size(), size_t(10));
-//
-//     Element menu;
-//     if (menu_entries.empty())
-//         menu = text("No matches") | color(Color::GrayDark);
-//     else
-//         menu = vbox(menu_entries)  | vscroll_indicator | yframe;
-//
-//
-//
-//     // Header with stats
-//     Element header = hbox({
-//         prompt,
-//         filler(),
-//         matches_counter
-//     });
-//
-//     int left_size = 10;
-//     auto _left = Renderer([]{ return text("left") | center; });
-//     auto _right = Renderer([]{ return text("right") | center; });
-//
-//     return vbox({
-//         header ,
-//         separator(),
-//         menu
-//     });
-// }
-
-// Component UserInterface::createComponent()
-// {
-//
-//     // Create components with flex_grow to fill available space
-//     auto right = Renderer([] {
-//         return text("right") | center | border | flex_grow;
-//     });
-//
-//     auto left = Renderer([] {
-//         return text("left") | center | border | flex_grow;
-//     });
-//
-//     auto input_field = Input(&m_query, "Enter text here...");
-//     auto input_component = Renderer(input_field, [&] {
-//         return input_field->Render() | border;
-//     });
-//
-//     // Initialize split sizes
-//     int left_size = 20;
-//
-//     // Create a resizable split that will grow to fill available space
-//     auto split = ResizableSplitLeft(left, right, &left_size);
-//     auto split_with_flex = Renderer(split, [&] {
-//         return split->Render() | flex_grow;
-//     });
-//
-//     // Create the main container with the split on top and input at bottom
-//     auto container = Container::Vertical({
-//         split_with_flex,
-//         input_component
-//     });
-//
-//     // Create the final renderer
-//     auto renderer = Renderer(container, [&] {
-//         return container->Render();
-//     });
-//
-//     return renderer;
-// }
-
-
-bool UserInterface::OnEvent(Event event)
-{
-    // Process input
-    if (m_input->OnEvent(event))
-    {
-        Refresh();
-        return true;
-    }
-
-    return ComponentBase::OnEvent(event);
-
-    // Handle navigation
-    // if (event.is_mouse() || m_filtered_items.empty())
-    // {
-    //     return false;
-    // }
-    //
-    // if (event == Event::ArrowDown || event == Event::Tab)
-    // {
-    //     m_selected = (m_selected + 1) % m_filtered_items.size();
-    //     m_selected_item = m_indices[m_selected];
-    //     return true;
-    // }
-    //
-    // if (event == Event::ArrowUp || event == Event::TabReverse)
-    // {
-    //     m_selected = (m_selected + m_filtered_items.size() - 1) % m_filtered_items.size();
-    //     m_selected_item = m_indices[m_selected];
-    //     return true;
-    // }
-    //
-    // if (event == Event::Return && !m_filtered_items.empty())
-    // {
-    //     m_selected_item = m_indices[m_selected];
-    //     return true;
-    // }
-    //
-    // return false;
-}
-
