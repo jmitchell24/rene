@@ -1,0 +1,13 @@
+//
+// Created by james on 02/05/25.
+//
+
+#pragma once
+
+#define RENE_NAME         "@PROJECT_NAME@"
+#define RENE_VERSION      "@PROJECT_VERSION@"
+
+namespace rene
+{
+
+}

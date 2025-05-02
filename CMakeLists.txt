@@ -1,14 +1,22 @@
 cmake_minimum_required(VERSION 3.13)
 
-project(rene)
+project(
+    rené
+    VERSION "25.5.2"
+)
 
 set(CMAKE_CXX_STANDARD 23) # Enable the C++23 standard
 
+# Configure headers
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/rene.hpp.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/rene.hpp
+    @ONLY
+)
 
 file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.hpp)
 add_executable(rene ${SOURCE_FILES}
-        src/user_interface.hpp
-        src/user_interface.cpp)
+        src/rene.hpp.in)
 
 #
 # my ut library

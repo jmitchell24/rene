@@ -1,7 +1,7 @@
 .vs
 CMakeLists.txt.user*
 .idea
-cmake-build-debug
+cmake-build*
 junk
 notes
 junk

@@ -6,6 +6,7 @@
 // rene
 //
 #include "user_interface.hpp"
+#include "rene.hpp"
 using namespace rene;
 
 //
@@ -281,7 +282,7 @@ int UserInterface::run(renamer_type renamer)
                 input_field->Render(),
             }),
             hbox({
-                text("rené 25.5.2") | dim,
+                text(RENE_NAME " " RENE_VERSION) | dim,
                 separatorEmpty(),
                 text("/path/to/files") | color(Color::OrangeRed1),
                 separatorEmpty(),

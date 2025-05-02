@@ -6,6 +6,10 @@ A command-line tool for bulk renaming files
 
 - tbd
 
+# Screenshots
+
+![screenshot 1](img/2025-05-02_screenshot.png)
+
 # Milestones 
 
 - [ ] Core Functionality - Basic cli structure and simple renaming operations
