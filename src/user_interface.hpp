@@ -10,7 +10,9 @@
 //
 // std
 //
+#include <vector>
 #include <string>
+#include <regex>
 
 
 namespace rene
@@ -24,19 +26,39 @@ namespace rene
     using renamer_type = ut::func<std::string(RenameArgs const&)>;
 
 
+    struct Replace
+    {
+        std::regex match;
+        std::string replace;
+
+
+    };
+
+    using itemlist_type = std::vector<std::string>;
+    using replacelist_type = std::vector<Replace>;
+
     class UserInterface
     {
     public:
-
-        std::string const& expression() const;
 
         int run(renamer_type renamer);
         static UserInterface& instance();
 
     private:
+        size_t          m_index_list;
+
+        Replace         m_replace;
+        itemlist_type   m_list_old;
+        itemlist_type   m_list_new;
+
+        std::string m_user_match;
+        std::string m_user_match_error;
+
         UserInterface();
 
         void updateRightList(renamer_type renamer);
+
+
     };
 
 

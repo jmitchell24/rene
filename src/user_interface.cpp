@@ -29,6 +29,7 @@ using namespace ftxui;
 //
 // std
 //
+#include <regex>
 #include <cstdlib>
 using namespace std;
 static vector<string> getTestItems()
@@ -90,14 +91,16 @@ static vector<string> getTestItems()
   };
 }
 
-string g_query = "";
-vector<string> g_list_left = getTestItems();
-vector<string> g_list_right = g_list_left;
-int g_selected_index = 0;
+// string g_query = "";
+// vector<string> g_list_left = getTestItems();
+// vector<string> g_list_right = g_list_left;
+// int g_selected_index = 0;
 
 #include <sstream>
 
-static Elements createItemElements(vector<string> const& items, int selected_index, bool prefix)
+
+
+static Elements createItemElements(Replace const& replace, itemlist_type const& items, int selected_index, bool prefix)
 {
     Elements el;
     for (size_t i = 0; i < items.size(); ++i)
@@ -127,10 +130,24 @@ static Elements createItemElements(vector<string> const& items, int selected_ind
         }
         else
         {
-            el.push_back(hbox({
-                text(" "),
-                text(it)
-            }) | notflex);
+            if (smatch m; regex_search(it, m, replace.match))
+            {
+                el.push_back(hbox({
+                    text(" "),
+                    text(m.prefix()),
+                    text(m.str()) | bgcolor(Color::Blue) | inverted,
+                    text(m.suffix())
+                }) | notflex);
+            }
+            else
+            {
+                el.push_back(hbox({
+                    text(" "),
+                    text(it)
+                }) | notflex);
+            }
+
+
         }
     }
 
@@ -221,24 +238,24 @@ Component RenderEvent(TYPE_RE render, TYPE_EV event) {
 //
 
 UserInterface::UserInterface()
-{}
-
-string const& UserInterface::expression() const
 {
-    return g_query;
+    m_list_old = getTestItems();
+    m_list_new = m_list_old;
 }
+
+
 
 void UserInterface::updateRightList(renamer_type renamer)
 {
-    g_list_right.clear();
-    for (size_t i = 0; i < g_list_left.size(); ++i)
+    m_list_new.clear();
+    for (size_t i = 0; i < m_list_old.size(); ++i)
     {
         RenameArgs ra {
             .index = i,
-            .filename = g_list_left[i],
+            .filename = m_list_old[i],
         };
 
-        g_list_right.push_back(renamer(ra));
+        m_list_new.push_back(renamer(ra));
     }
 
 }
@@ -251,16 +268,19 @@ int UserInterface::run(renamer_type renamer)
     updateRightList(renamer);
 
     // Create the list components
-    auto right = Renderer([] {
-        return vbox(createItemElements(g_list_right, g_selected_index, false)) | frame | notflex;
+    auto right = Renderer([&] {
+        return vbox(createItemElements(m_replace, m_list_new, m_index_list, false)) | frame | notflex;
     });
 
-    auto left = Renderer([] {
-        return vbox(createItemElements(g_list_left, g_selected_index, true)) | my_vscroll_indicator | frame | notflex;
+    auto left = Renderer([&] {
+        return vbox(createItemElements(m_replace, m_list_old, m_index_list, true)) | my_vscroll_indicator | frame | notflex;
     });
+
+
+    enum SelectedInput { SELECTED_MATCH, SELECTED_REPLACE } selected_input=SELECTED_MATCH;
 
     // Create the input component with fixed height
-    auto input_field = Input(&g_query, "expression", {
+    auto input_field_match = Input(&m_user_match, "match", {
         .transform = [](InputState state) {
 
             state.element |= color(Color::White);
@@ -275,23 +295,35 @@ int UserInterface::run(renamer_type renamer)
 
     });
 
-    auto input_component = Renderer(input_field, [&] {
+    auto input_field_replace = Input(&m_replace.replace, "replace", {
+    .transform = [](InputState state) {
+
+        state.element |= color(Color::White);
+
+        if (state.is_placeholder)   state.element |= dim;
+        if (state.hovered)          state.element |= bgcolor(Color::GrayDark);
+
+        return state.element;
+      },
+    .multiline = false,
+    .on_change = [&]{ updateRightList(renamer); }
+
+    });
+
+    auto input_component = Renderer(input_field_match, [&] {
         return vbox({
             hbox({
-                text("> ") | color(Color::Green) | bold,
-                input_field->Render(),
+                text("> ") | ( selected_input == SELECTED_MATCH ? color(Color::Green) | bold : dim ),
+                input_field_match->Render()
+            }),
+            hbox({
+                text("> ") | ( selected_input == SELECTED_REPLACE ? color(Color::Green) | bold : dim ),
+                input_field_replace->Render()
             }),
             hbox({
                 text(RENE_NAME " " RENE_VERSION) | dim,
                 separatorEmpty(),
-                text("/path/to/files") | color(Color::OrangeRed1),
-                separatorEmpty(),
-                text("opt1=yes") | color(Color::GreenYellow),
-                separatorEmpty(),
-                text("opt2=123") | color(Color::GreenYellow),
-                separatorEmpty(),
-                text("opt3='...'") | color(Color::GreenYellow),
-                separatorEmpty(),
+                text(m_user_match_error) | color(Color::OrangeRed1),
             })
         }) | border;
     });
@@ -314,6 +346,7 @@ int UserInterface::run(renamer_type renamer)
 
     auto fn_event = [&](Event e)
     {
+
         if (e == Event::Escape || e == Event::q)
         {
             screen.Exit();
@@ -322,23 +355,50 @@ int UserInterface::run(renamer_type renamer)
 
         if (e == Event::ArrowUp)
         {
-            if (g_selected_index > 0)
-                --g_selected_index;
+            if (m_index_list > 0)
+                --m_index_list;
             return true;
         }
 
         if (e == Event::ArrowDown)
         {
-            if (g_selected_index < g_list_left.size()-1)
+            if (m_index_list < m_list_old.size()-1)
             {
-                ++g_selected_index;
+                ++m_index_list;
             }
             return true;
         }
 
-
-        if (input_field->OnEvent(e))
+        if (e == Event::Tab)
+        {
+            auto se = selected_input;
+            if (se == SELECTED_MATCH)
+                selected_input = SELECTED_REPLACE;
+            if (se == SELECTED_REPLACE)
+                selected_input = SELECTED_MATCH;
             return true;
+        }
+
+
+        if (selected_input == SELECTED_REPLACE && input_field_replace->OnEvent(e))
+            return true;
+
+        if (selected_input == SELECTED_MATCH && input_field_match->OnEvent(e))
+        {
+            m_replace.match = {};
+            m_user_match_error = "";
+
+            try
+            {
+                m_replace.match = regex(m_user_match);
+            }
+            catch (exception const& e)
+            {
+                m_user_match_error = e.what();
+            }
+            return true;
+        }
+
         return split->OnEvent(e);
     };
 
