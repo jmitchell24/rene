@@ -6,6 +6,7 @@
 // rene
 //
 #include "user_interface.hpp"
+#include "replacer.hpp"
 #include "rene.hpp"
 using namespace rene;
 
@@ -237,6 +238,7 @@ Component RenderEvent(TYPE_RE render, TYPE_EV event) {
 // UserInterface -> Implementation
 //
 
+
 UserInterface::UserInterface()
 {
     m_list_old = getTestItems();
@@ -245,17 +247,23 @@ UserInterface::UserInterface()
 
 
 
-void UserInterface::updateRightList(renamer_type renamer)
+void UserInterface::updateRightList()
 {
     m_list_new.clear();
-    for (size_t i = 0; i < m_list_old.size(); ++i)
+    for (auto&& it : m_list_old)
     {
-        RenameArgs ra {
-            .index = i,
-            .filename = m_list_old[i],
-        };
-
-        m_list_new.push_back(renamer(ra));
+        if (smatch m; regex_search(it, m, m_replace.match))
+        {
+            m_list_new.push_back(
+                m.prefix().str() +
+                m_replace.replace +
+                m.suffix().str()
+                );
+        }
+        else
+        {
+            m_list_new.push_back(it);
+        }
     }
 
 }
@@ -265,7 +273,7 @@ int UserInterface::run(renamer_type renamer)
     auto screen = ScreenInteractive::Fullscreen();
 
 
-    updateRightList(renamer);
+    updateRightList();
 
     // Create the list components
     auto right = Renderer([&] {
@@ -291,7 +299,7 @@ int UserInterface::run(renamer_type renamer)
             return state.element;
           },
         .multiline = false,
-        .on_change = [&]{ updateRightList(renamer); }
+        .on_change = [&]{ updateRightList(); }
 
     });
 
@@ -306,8 +314,12 @@ int UserInterface::run(renamer_type renamer)
         return state.element;
       },
     .multiline = false,
-    .on_change = [&]{ updateRightList(renamer); }
+    .on_change = [&]{ updateRightList(); }
 
+    });
+
+    auto button = Button({
+        .label = "mode"
     });
 
     auto input_component = Renderer(input_field_match, [&] {
@@ -322,6 +334,8 @@ int UserInterface::run(renamer_type renamer)
             }),
             hbox({
                 text(RENE_NAME " " RENE_VERSION) | dim,
+                separatorEmpty(),
+                text(m_mode == MODE_TEMPLATE ? "template mode" : "find&replace mode") | color(Color::Green),
                 separatorEmpty(),
                 text(m_user_match_error) | color(Color::OrangeRed1),
             })
@@ -346,7 +360,6 @@ int UserInterface::run(renamer_type renamer)
 
     auto fn_event = [&](Event e)
     {
-
         if (e == Event::Escape || e == Event::q)
         {
             screen.Exit();
@@ -379,9 +392,25 @@ int UserInterface::run(renamer_type renamer)
             return true;
         }
 
+        if (e == Event::AltF)
+        {
+            auto m = m_mode;
+            if (m == MODE_TEMPLATE) m_mode = MODE_FIND_REPLACE;
+            if (m == MODE_FIND_REPLACE) m_mode = MODE_TEMPLATE;
+        }
 
         if (selected_input == SELECTED_REPLACE && input_field_replace->OnEvent(e))
+        {
+            //
+            //
+            //
+
+            updateRightList();
+
+
             return true;
+        }
+
 
         if (selected_input == SELECTED_MATCH && input_field_match->OnEvent(e))
         {

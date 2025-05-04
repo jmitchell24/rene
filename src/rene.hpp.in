@@ -6,6 +6,7 @@
 
 #define RENE_NAME         "@PROJECT_NAME@"
 #define RENE_VERSION      "@PROJECT_VERSION@"
+#define RENE_RELEASE      "@PROJECT_RELEASE@"
 
 namespace rene
 {

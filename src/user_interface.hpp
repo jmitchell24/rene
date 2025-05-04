@@ -37,14 +37,18 @@ namespace rene
     using itemlist_type = std::vector<std::string>;
     using replacelist_type = std::vector<Replace>;
 
+
+
     class UserInterface
     {
     public:
+        enum Mode { MODE_TEMPLATE, MODE_FIND_REPLACE };
 
         int run(renamer_type renamer);
         static UserInterface& instance();
 
     private:
+
         size_t          m_index_list;
 
         Replace         m_replace;
@@ -54,9 +58,11 @@ namespace rene
         std::string m_user_match;
         std::string m_user_match_error;
 
+        Mode m_mode = MODE_FIND_REPLACE;
+
         UserInterface();
 
-        void updateRightList(renamer_type renamer);
+        void updateRightList();
 
 
     };

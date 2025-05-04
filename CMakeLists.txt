@@ -1,9 +1,14 @@
 cmake_minimum_required(VERSION 3.13)
 
+# releases: pebble, stone, boulder
+
 project(
     rené
-    VERSION "25.5.2"
+    VERSION "25.5.4"
+    DESCRIPTION "a bulk renaming utility"
 )
+
+SET(PROJECT_RELEASE "pebble")
 
 set(CMAKE_CXX_STANDARD 23) # Enable the C++23 standard
 
@@ -16,7 +21,9 @@ configure_file(
 
 file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.hpp)
 add_executable(rene ${SOURCE_FILES}
-        src/rene.hpp.in)
+        src/rene.hpp.in
+        src/replacer.hpp
+        src/replacer.cpp)
 
 #
 # my ut library
