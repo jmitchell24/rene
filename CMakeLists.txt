@@ -1,14 +1,15 @@
 cmake_minimum_required(VERSION 3.13)
 
-# releases: pebble, stone, boulder
+
 
 project(
     rené
-    VERSION "25.5.4"
+    VERSION "25.5.5"
     DESCRIPTION "a bulk renaming utility"
 )
 
-SET(PROJECT_RELEASE "pebble")
+# releases: gravel, pebble, stone, boulder
+SET(PROJECT_RELEASE "gravel")
 
 set(CMAKE_CXX_STANDARD 23) # Enable the C++23 standard
 

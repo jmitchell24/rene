@@ -92,15 +92,6 @@ static vector<string> getTestItems()
   };
 }
 
-// string g_query = "";
-// vector<string> g_list_left = getTestItems();
-// vector<string> g_list_right = g_list_left;
-// int g_selected_index = 0;
-
-#include <sstream>
-
-
-
 static Elements createItemElements(Replace const& replace, itemlist_type const& items, int selected_index, bool prefix)
 {
     Elements el;
@@ -217,23 +208,6 @@ Element my_vscroll_indicator(Element child) {
     return std::make_shared<Impl>(std::move(child));
 }
 
-#define TYPE_RE std::function<Element()>
-#define TYPE_EV std::function<bool(Event)>
-Component RenderEvent(TYPE_RE render, TYPE_EV event) {
-    class Impl : public ComponentBase {
-    public:
-        explicit Impl(TYPE_RE render, TYPE_EV event)
-            : render_(move(render)), event_(move(event)) {}
-        Element OnRender() override { return render_(); }
-        bool OnEvent(Event e) override { return event_(e); }
-        TYPE_RE render_; TYPE_EV event_;
-    };
-
-    return Make<Impl>(move(render), move(event));
-}
-#undef TYPE_RE
-#undef TYPE_EV
-
 //
 // UserInterface -> Implementation
 //
@@ -272,7 +246,6 @@ int UserInterface::run(renamer_type renamer)
 {
     auto screen = ScreenInteractive::Fullscreen();
 
-
     updateRightList();
 
     // Create the list components
@@ -284,81 +257,57 @@ int UserInterface::run(renamer_type renamer)
         return vbox(createItemElements(m_replace, m_list_old, m_index_list, true)) | my_vscroll_indicator | frame | notflex;
     });
 
-
-    enum SelectedInput { SELECTED_MATCH, SELECTED_REPLACE } selected_input=SELECTED_MATCH;
-
     // Create the input component with fixed height
     auto input_field_match = Input(&m_user_match, "match", {
-        .transform = [](InputState state) {
+        .multiline = false,
+        .on_change = [&]{ updateRightList(); }
+    });
 
-            state.element |= color(Color::White);
-
-            if (state.is_placeholder)   state.element |= dim;
-            if (state.hovered)          state.element |= bgcolor(Color::GrayDark);
-
-            return state.element;
-          },
+    auto input_field_replace = Input(&m_replace.replace, "replace", {
         .multiline = false,
         .on_change = [&]{ updateRightList(); }
 
     });
 
-    auto input_field_replace = Input(&m_replace.replace, "replace", {
-    .transform = [](InputState state) {
-
-        state.element |= color(Color::White);
-
-        if (state.is_placeholder)   state.element |= dim;
-        if (state.hovered)          state.element |= bgcolor(Color::GrayDark);
-
-        return state.element;
-      },
-    .multiline = false,
-    .on_change = [&]{ updateRightList(); }
-
-    });
-
-    auto button = Button({
-        .label = "mode"
-    });
-
-    auto input_component = Renderer(input_field_match, [&] {
-        return vbox({
-            hbox({
-                text("> ") | ( selected_input == SELECTED_MATCH ? color(Color::Green) | bold : dim ),
-                input_field_match->Render()
-            }),
-            hbox({
-                text("> ") | ( selected_input == SELECTED_REPLACE ? color(Color::Green) | bold : dim ),
-                input_field_replace->Render()
-            }),
-            hbox({
-                text(RENE_NAME " " RENE_VERSION) | dim,
-                separatorEmpty(),
-                text(m_mode == MODE_TEMPLATE ? "template mode" : "find&replace mode") | color(Color::Green),
-                separatorEmpty(),
-                text(m_user_match_error) | color(Color::OrangeRed1),
-            })
-        }) | border;
-    });
+    auto button = Button("mode", {}, ButtonOption::Ascii());
 
     // Initialize split sizes
     int left_size = 50;
 
     // First construct the resizable split
-    auto split = ResizableSplitLeft(left, right, &left_size);
+    auto _split = ResizableSplitLeft(left, right, &left_size);
 
-    // Create a component structure where the lists can be scrolled/resized
-    // but the input field is fixed at the bottom with a guaranteed minimum height
+    auto _component = Container::Vertical({
+        input_field_match,
+        input_field_replace,
+        button
+    });
 
-    auto fn_render = [&] {
+    auto _renderer = Renderer(_component, [&]
+    {
         return vbox({
-            split->Render() | flex,
-            input_component->Render()
+            _split->Render() | flex,
+            vbox({
+                hbox({
+                    text("> ") | ( input_field_match->Focused() ? color(Color::Green) | bold : dim ),
+                    input_field_match->Render()
+                }),
+                hbox({
+                    text("> ") | ( input_field_replace->Focused() ? color(Color::Green) | bold : dim ),
+                    input_field_replace->Render()
+                }),
+                hbox({
+                    text(RENE_NAME " " RENE_VERSION) | dim,
+                    separatorEmpty(),
+                    button->Render(),
+                    separatorEmpty(),
+                    text(m_user_match_error) | color(Color::OrangeRed1),
+                })
+            }) | border
         }) | flex;
-    };
+    });
 
-    auto fn_event = [&](Event e)
+    auto _event_catch = CatchEvent(_renderer, [&](Event e)
     {
         if (e == Event::Escape || e == Event::q)
         {
@@ -381,57 +330,10 @@ int UserInterface::run(renamer_type renamer)
             }
             return true;
         }
+        return false;
+    });
 
-        if (e == Event::Tab)
-        {
-            auto se = selected_input;
-            if (se == SELECTED_MATCH)
-                selected_input = SELECTED_REPLACE;
-            if (se == SELECTED_REPLACE)
-                selected_input = SELECTED_MATCH;
-            return true;
-        }
-
-        if (e == Event::AltF)
-        {
-            auto m = m_mode;
-            if (m == MODE_TEMPLATE) m_mode = MODE_FIND_REPLACE;
-            if (m == MODE_FIND_REPLACE) m_mode = MODE_TEMPLATE;
-        }
-
-        if (selected_input == SELECTED_REPLACE && input_field_replace->OnEvent(e))
-        {
-            //
-            //
-            //
-
-            updateRightList();
-
-
-            return true;
-        }
-
-
-        if (selected_input == SELECTED_MATCH && input_field_match->OnEvent(e))
-        {
-            m_replace.match = {};
-            m_user_match_error = "";
-
-            try
-            {
-                m_replace.match = regex(m_user_match);
-            }
-            catch (exception const& e)
-            {
-                m_user_match_error = e.what();
-            }
-            return true;
-        }
-
-        return split->OnEvent(e);
-    };
-
-    screen.Loop(RenderEvent(fn_render, fn_event));
+    screen.Loop(_event_catch);
     return EXIT_SUCCESS;
 }
 
