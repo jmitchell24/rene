@@ -9,13 +9,24 @@ using namespace rene;
 // ut
 //
 #include <ut/ut.hpp>
+#include <ut/term.hpp>
 using namespace ut;
 
 //
 // std
 //
+#include <format>
 #include <iostream>
 using namespace std;
+
+#include <string>
+#include <vector>
+#include <stdexcept>
+#include <utility>
+#include <iostream>
+
+
+
 
 auto g_help_text =(R"(
 usage: rene [options] <directory>
@@ -52,12 +63,8 @@ Copyright © 2025 James Peter Mitchell
 For more information, visit: https://github.com/jmitchell24/rene
 )"_sv).trim();
 
-string renamer(RenameArgs const& ra)
-{
-    return to_string(ra.index) + " " + ra.filename;
-}
-
 int main(int argc, char** argv)
 {
-    return UI.run(fn_pointer(renamer));
+    return UserInterface::instance().run();
 }
+

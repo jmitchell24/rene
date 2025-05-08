@@ -2,6 +2,17 @@
 // Created by james on 02/05/25.
 //
 
+
+//
+// rene
+//
+#include "replacer.hpp"
+
+//
+// ftxui
+//
+#include "ftxui/dom/elements.hpp"
+
 //
 // ut
 //
@@ -14,60 +25,55 @@
 #include <string>
 #include <regex>
 
-
 namespace rene
 {
-    struct RenameArgs
+
+
+    struct Name
     {
-        size_t index;
-        std::string filename;
+        std::string text_old;
+        std::string text_new;
+        //std::vector<std::smatch> matches;
+
+        Name() { }
+        Name(std::string const& s)
+            : text_old(s), text_new()//, matches()
+        { }
+
+
     };
 
-    using renamer_type = ut::func<std::string(RenameArgs const&)>;
-
-
-    struct Replace
-    {
-        std::regex match;
-        std::string replace;
-
-
-    };
-
-    using itemlist_type = std::vector<std::string>;
-    using replacelist_type = std::vector<Replace>;
-
-
+    using names_type = std::vector<Name>;
 
     class UserInterface
     {
     public:
         enum Mode { MODE_TEMPLATE, MODE_FIND_REPLACE };
 
-        int run(renamer_type renamer);
+        int run();
         static UserInterface& instance();
 
     private:
+        size_t m_highlighted_index=0;
 
-        size_t          m_index_list;
 
-        Replace         m_replace;
-        itemlist_type   m_list_old;
-        itemlist_type   m_list_new;
+        names_type m_names;
 
-        std::string m_user_match;
-        std::string m_user_match_error;
 
-        Mode m_mode = MODE_FIND_REPLACE;
+
+        std::string m_str_user_match;
+        std::string m_str_user_replace;
+        std::string m_str_error;
+
+        //std::regex m_regex;
+        Replacer m_replacer;
 
         UserInterface();
 
-        void updateRightList();
+        void updateReplaceList();
+        //void updateMatchList();
 
-
+        ftxui::Elements createMatchElements();
+        ftxui::Elements createReplaceElements();
     };
-
-
-    [[maybe_unused]]
-    static UserInterface& UI = UserInterface::instance();
 }

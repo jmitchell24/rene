@@ -7,6 +7,7 @@
 //
 #include "user_interface.hpp"
 #include "replacer.hpp"
+#include "utility.hpp"
 #include "rene.hpp"
 using namespace rene;
 
@@ -19,13 +20,11 @@ using namespace rene;
 #include <ftxui/component/component_options.hpp>
 using namespace ftxui;
 
-
-
-
 //
 // ut
 //
-// using namespace ut;
+#include <ut/random.hpp>
+using namespace ut;
 
 //
 // std
@@ -33,125 +32,15 @@ using namespace ftxui;
 #include <regex>
 #include <cstdlib>
 using namespace std;
-static vector<string> getTestItems()
-{
-    // Return some demo items if file reading fails
-    return {
 
-        "user.rb",
-        "users_controller.rb",
-        "index.html.erb",
-        "show.html.erb",
-        "new.html.erb",
-        "edit.html.erb",
-        "post.rb",
-        "posts_controller.rb",
-        "comment.rb",
-        "comments_controller.rb",
-        "category.rb",
-        "categories_controller.rb",
-        "tag.rb",
-        "tags_controller.rb",
-        "profile.rb",
-        "profiles_controller.rb",
-        "attachment.rb",
-        "attachments_controller.rb",
-        "notification.rb",
-        "notifications_controller.rb",
-        "message.rb",
-        "messages_controller.rb",
-        "subscription.rb",
-        "subscriptions_controller.rb",
-        "application_helper.rb",
-        "application.html.erb",
-        "dashboard.html.erb",
-        "admin.rb",
-        "admins_controller.rb",
-        "event.rb",
-        "events_controller.rb",
-        "product.rb",
-        "products_controller.rb",
-        "order.rb",
-        "orders_controller.rb",
-        "invoice.rb",
-        "invoices_controller.rb",
-        "session_controller.rb",
-        "authentication.rb",
-        "mailer.rb",
-        "seed.rb",
-        "routes.rb",
-        "schema.rb",
-        "database.yml",
-        "Gemfile",
-        "Rakefile",
-        "application.rb",
-        "environment.rb",
-        "boot.rb",
-        "development.rb"
+//
+// utilities
+//
 
-  };
-}
-
-static Elements createItemElements(Replace const& replace, itemlist_type const& items, int selected_index, bool prefix)
-{
-    Elements el;
-    for (size_t i = 0; i < items.size(); ++i)
-    {
-        bool is_selected = (i == selected_index);
-        auto&& it = items[i];
-
-        if (is_selected)
-        {
-            if (prefix)
-            {
-                ostringstream oss;
-                oss << "(" << (i+1) << "/" << items.size() << "> ";
-                el.push_back(hbox({
-                    text(oss.str()) | color(Color::Green) | bold,
-                    text(it) | inverted
-                }) | notflex | focus);
-            }
-            else
-            {
-                el.push_back(hbox({
-                    text(" "),
-                    text(it) | inverted
-                }) | notflex | focus);
-            }
-
-        }
-        else
-        {
-            if (smatch m; regex_search(it, m, replace.match))
-            {
-                el.push_back(hbox({
-                    text(" "),
-                    text(m.prefix()),
-                    text(m.str()) | bgcolor(Color::Blue) | inverted,
-                    text(m.suffix())
-                }) | notflex);
-            }
-            else
-            {
-                el.push_back(hbox({
-                    text(" "),
-                    text(it)
-                }) | notflex);
-            }
-
-
-        }
-    }
-
-
-    return el;
-}
-
-
-/// @brief Display a vertical scrollbar to the right.
+/// @brief Display a vertical scrollbar to the left.
 /// colors.
 /// @ingroup dom
-Element my_vscroll_indicator(Element child) {
+Element ftxui::left_vscroll_indicator(Element child) {
     class Impl : public Node {
     public:
         explicit Impl(Element child) : Node(unpack(std::move(child))) {}
@@ -208,6 +97,80 @@ Element my_vscroll_indicator(Element child) {
     return std::make_shared<Impl>(std::move(child));
 }
 
+vector<string> getTestNames(size_t sz);
+
+// static Elements createItemElements(Replace const& replace, itemlist_type const& items, int selected_index, bool prefix)
+// {
+//     Elements el;
+//     for (size_t i = 0; i < items.size(); ++i)
+//     {
+//         bool is_selected = (i == selected_index);
+//         auto&& it = items[i];
+//
+//         if (is_selected)
+//         {
+//             if (prefix)
+//             {
+//                 ostringstream oss;
+//                 oss << "(" << (i+1) << "/" << items.size() << "> ";
+//                 el.push_back(hbox({
+//                     text(oss.str()) | color(Color::Green) | bold,
+//                     text(it) | inverted
+//                 }) | notflex | focus);
+//             }
+//             else
+//             {
+//                 el.push_back(hbox({
+//                     text(" "),
+//                     text(it) | inverted
+//                 }) | notflex | focus);
+//             }
+//
+//         }
+//         else
+//         {
+//             if (smatch m; regex_search(it, m, replace.match))
+//             {
+//                 el.push_back(hbox({
+//                     text(" "),
+//                     text(m.prefix()),
+//                     text(m.str()) | bgcolor(Color::Blue) | inverted,
+//                     text(m.suffix())
+//                 }) | notflex);
+//             }
+//             else
+//             {
+//                 el.push_back(hbox({
+//                     text(" "),
+//                     text(it)
+//                 }) | notflex);
+//             }
+//
+//
+//         }
+//     }
+//
+//
+//     return el;
+// }
+
+
+//
+// Name -> Implementation
+//
+
+// void Name::updateMatches(regex const& r)
+// {
+//     auto beg = sregex_iterator(text_old.begin(), text_old.end(), r);
+//     auto end = sregex_iterator();
+//
+//     matches.clear();
+//     for (auto i = beg; i != end; ++i)
+//         matches.push_back(*i);
+// }
+
+
+
 //
 // UserInterface -> Implementation
 //
@@ -215,72 +178,229 @@ Element my_vscroll_indicator(Element child) {
 
 UserInterface::UserInterface()
 {
-    m_list_old = getTestItems();
-    m_list_new = m_list_old;
+    for (auto&& it: getTestNames(50))
+    {
+        m_names.push_back(Name(it));
+
+
+    }
+
+
+}
+
+#if 0
+void callStringSegments(string const& text,
+    vector<smatch> const& matches,
+    function<void(string seg, bool is_match)> const& callback)
+{
+    // If there are no matches, just call the callback with the entire text as a non-match
+    if (matches.empty()) {
+        callback(text, false);
+        return;
+    }
+
+    size_t lastPos = 0;
+
+    // Process each match and the text between matches
+    for (const auto& match : matches) {
+        size_t matchPos = match.position();
+
+        // If there's text before this match, call the callback with it as a non-match
+        if (matchPos > lastPos) {
+            string nonMatchText = text.substr(lastPos, matchPos - lastPos);
+            callback(nonMatchText, false);
+        }
+
+        // Call the callback with the matched text
+        callback(match.str(), true);
+
+        // Update lastPos to be after this match
+        lastPos = matchPos + match.length();
+    }
+
+    // If there's any remaining text after the last match, call the callback with it
+    if (lastPos < text.length()) {
+        string remainingText = text.substr(lastPos);
+        callback(remainingText, false);
+    }
+}
+#endif
+
+Elements UserInterface::createReplaceElements()
+{
+    Elements el;
+
+    for (size_t i = 0; i < m_names.size(); ++i)
+    {
+        bool is_selected = (i == m_highlighted_index);
+        auto&& it = m_names[i];
+
+        if (is_selected)
+            el.push_back(text(" " + it.text_new) | inverted | focus);
+        else
+            el.push_back(text(" " + it.text_new));
+    }
+    return el;
 }
 
 
-
-void UserInterface::updateRightList()
+Elements UserInterface::createMatchElements()
 {
-    m_list_new.clear();
-    for (auto&& it : m_list_old)
+    Elements el;
+    for (size_t i = 0; i < m_names.size(); ++i)
     {
-        if (smatch m; regex_search(it, m, m_replace.match))
+        bool is_selected = (i == m_highlighted_index);
+        auto&& it = m_names[i];
+
+        if (is_selected)
         {
-            m_list_new.push_back(
-                m.prefix().str() +
-                m_replace.replace +
-                m.suffix().str()
-                );
+            ostringstream oss;
+            oss << "(" << (i+1) << "/" << m_names.size() << "> ";
+            el.push_back(hbox({
+                text(oss.str()) | color(Color::Green) | bold,
+                text(it.text_old) | inverted
+            }) | notflex | focus);
+
         }
         else
         {
-            m_list_new.push_back(it);
+            // if (smatch m; regex_search(it, m, m_regex))
+            // {
+            //
+            //     el.push_back(hbox({
+            //         text(" "),
+            //         text(m.prefix()),
+            //         text(m.str()) | bgcolor(Color::Blue) | inverted,
+            //         text(m.suffix())
+            //     }) | notflex);
+            // }
+            // else
+            // {
+
+            // }
+
+            Elements hel = { text(" ") };
+
+            // callStringSegments(it.text_old, it.matches, [&](string const& s, bool is_match)
+            // {
+            //     if (is_match)
+            //         hel.push_back(text(s) | bgcolor(Color::Blue) | inverted);
+            //     else
+            //         hel.push_back(text(s));
+            // });
+
+            el.push_back(hbox({
+            text(" "),
+            text(it.text_old)
+            }) | notflex);
         }
+    }
+
+
+    return el;
+}
+
+void UserInterface::updateReplaceList()
+{
+    try
+    {
+        m_str_error = "";
+        m_replacer = Replacer(m_str_user_replace);
+
+        for (size_t i = 0; i < m_names.size(); ++i)
+        {
+            auto&& it = m_names[i];
+
+            Replacer::Args args {
+                .original = it.text_old,
+                .increment = (int)i+1,
+            };
+
+            it.text_new = m_replacer.replace(args);
+        }
+    }
+    catch (exception const& e)
+    {
+        m_str_error = e.what();
     }
 
 }
 
-int UserInterface::run(renamer_type renamer)
+// void UserInterface::updateMatchList()
+// {
+//     try
+//     {
+//         m_regex = m_str_user_match;
+//
+//         for (auto&& it: m_names)
+//         {
+//             it.updateMatches(m_regex);
+//             it.updateNewText(m_replacer);
+//         }
+//
+//     }
+//     catch (exception const& e)
+//     {
+//         m_str_error = e.what();
+//     }
+// }
+
+// Component CachedRenderer(std::function<Element()> render, std::function<bool()> needs_refresh)
+// {
+//     class Impl : public ComponentBase
+//     {
+//     public:
+//         explicit Impl(std::function<Element()> render, std::function<bool()> needs_refresh)
+//             : render_(std::move(render)), needs_refresh_(std::move(needs_refresh))
+//         {}
+//
+//         Element OnRender() override
+//         {
+//             if (needs_refresh_())
+//                 cached_element_ = render_();
+//             return cached_element_;
+//         }
+//         std::function<Element()> render_;
+//         std::function<bool()> needs_refresh_;
+//         Element cached_element_;
+//     };
+//
+//     return Make<Impl>(std::move(render), std::move(needs_refresh));
+// }
+
+int UserInterface::run()
 {
     auto screen = ScreenInteractive::Fullscreen();
 
-    updateRightList();
+    //updateMatchList();
+    updateReplaceList();
+
+    // Initialize split sizes
+    int split_position = 50;
+    int split_position_prev = 0;
 
     // Create the list components
-    auto right = Renderer([&] {
-        return vbox(createItemElements(m_replace, m_list_new, m_index_list, false)) | frame | notflex;
-    });
+    auto match_names_renderer = Renderer(
+        [&] { return vbox(createMatchElements()) | left_vscroll_indicator | frame; });
 
-    auto left = Renderer([&] {
-        return vbox(createItemElements(m_replace, m_list_old, m_index_list, true)) | my_vscroll_indicator | frame | notflex;
-    });
+    auto replace_names_renderer = Renderer(
+        [&] { return vbox(createReplaceElements()) | frame; });
 
-    // Create the input component with fixed height
-    auto input_field_match = Input(&m_user_match, "match", {
+    auto input_field_replace = Input(&m_str_user_replace, "replace", {
         .multiline = false,
-        .on_change = [&]{ updateRightList(); }
-    });
-
-    auto input_field_replace = Input(&m_replace.replace, "replace", {
-        .multiline = false,
-        .on_change = [&]{ updateRightList(); }
-
+        .on_change = [&]{ updateReplaceList(); }
     });
 
     auto button = Button("mode", {}, ButtonOption::Ascii());
 
-    // Initialize split sizes
-    int left_size = 50;
+
 
     // First construct the resizable split
-    auto _split = ResizableSplitLeft(left, right, &left_size);
+    auto _split = ResizableSplitLeft(match_names_renderer, replace_names_renderer, &split_position);
 
     auto _component = Container::Vertical({
-        input_field_match,
-        input_field_replace,
-        button
+        _split,
+        input_field_replace
     });
 
     auto _renderer = Renderer(_component, [&]
@@ -289,19 +409,13 @@ int UserInterface::run(renamer_type renamer)
             _split->Render() | flex,
             vbox({
                 hbox({
-                    text("> ") | ( input_field_match->Focused() ? color(Color::Green) | bold : dim ),
-                    input_field_match->Render()
-                }),
-                hbox({
                     text("> ") | ( input_field_replace->Focused() ? color(Color::Green) | bold : dim ),
                     input_field_replace->Render()
                 }),
                 hbox({
                     text(RENE_NAME " " RENE_VERSION) | dim,
                     separatorEmpty(),
-                    button->Render(),
-                    separatorEmpty(),
-                    text(m_user_match_error) | color(Color::OrangeRed1),
+                    text(m_str_error) | color(Color::OrangeRed1),
                 })
             }) | border
         }) | flex;
@@ -317,19 +431,23 @@ int UserInterface::run(renamer_type renamer)
 
         if (e == Event::ArrowUp)
         {
-            if (m_index_list > 0)
-                --m_index_list;
+            if (m_highlighted_index > 0)
+                --m_highlighted_index;
+            split_position_prev = 0;
             return true;
         }
 
         if (e == Event::ArrowDown)
         {
-            if (m_index_list < m_list_old.size()-1)
+            if (m_highlighted_index < m_names.size()-1)
             {
-                ++m_index_list;
+                ++m_highlighted_index;
             }
+            split_position_prev = 0;
             return true;
         }
+
+        split_position_prev = split_position;
         return false;
     });
 
@@ -342,4 +460,84 @@ UserInterface& UserInterface::instance()
 {
     static UserInterface x;
     return x; 
+}
+
+vector<string> getTestNames(size_t sz)
+{
+    static vector<string> names = {
+        "The Shawshank Redemption (1994)",
+        "The Godfather (1972)",
+        "The Dark Knight (2008)",
+        "Pulp Fiction (1994)",
+        "Schindler's List (1993)",
+        "Forrest Gump (1994)",
+        "Fight Club (1999)",
+        "Inception (2010)",
+        "The Matrix (1999)",
+        "Goodfellas (1990)",
+        "One Flew Over the Cuckoo's Nest (1975)",
+        "Se7en (1995)",
+        "The Lord of the Rings: The Return of the King (2003)",
+        "Star Wars: Episode V - The Empire Strikes Back (1980)",
+        "Titanic (1997)",
+        "City of God (2002)",
+        "Sunset Blvd. (1950)",
+        "Casablanca (1942)",
+        "Psycho (1960)",
+        "12 Angry Men (1957)",
+        "In the Mood for Love (2000)",
+        "Life Is Beautiful (1997)",
+        "The Pianist (2002)",
+        "Forrest Gump (1994)",
+        "The Silence of the Lambs (1991)",
+        "It's a Wonderful Life (1946)",
+        "La Haine (1995)",
+        "The Usual Suspects (1995)",
+        "Léon: The Professional (1994)",
+        "North by Northwest (1959)",
+        "Double Indemnity (1944)",
+        "Gone with the Wind (1939)",
+        "The Conversation (1974)",
+        "Rashomon (1950)",
+        "Alien (1979)",
+        "Vertigo (1958)",
+        "Taxi Driver (1976)",
+        "Brazil (1985)",
+        "Juno (2007)",
+        "Up (2009)",
+        "Parasite (2019)",
+        "Moonlight (2016)",
+        "The Shape of Water (2017)",
+        "Green Book (2018)",
+        "The Irishman (2019)",
+        "Django Unchained (2012)",
+        "The Social Network (2010)"
+    };
+
+    static vector<string> exts = {
+        "mp4",
+        "mkv",
+        "avi",
+        "mov",
+        "wmv",
+        "flv",
+        "3gp",
+        "rmvb",
+        "iso",
+        "rom"
+    };
+
+
+    vector<string> res;
+
+
+
+    for (size_t i = 0; i < sz; ++i)
+    {
+        res.push_back(
+            ut_rng.choose(names.begin(), names.end()) + "." +
+            ut_rng.choose(exts.begin(), exts.end()));
+    }
+
+    return res;
 }

@@ -4,11 +4,12 @@ A command-line tool for bulk renaming files
 
 # Features 
 
-- tbd
+- Easy to use TUI interface 
+- Advanced text templating support
 
 # Screenshots
 
-![screenshot 1](img/2025-05-03_screenshot.png)
+![screenshot 1](img/2025-05-08_screenshot.png)
 
 # Milestones 
 

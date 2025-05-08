@@ -21,10 +21,7 @@ configure_file(
 )
 
 file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.hpp)
-add_executable(rene ${SOURCE_FILES}
-        src/rene.hpp.in
-        src/replacer.hpp
-        src/replacer.cpp)
+add_executable(rene ${SOURCE_FILES})
 
 #
 # my ut library
