@@ -10,21 +10,29 @@
 
 #include "ut/check.hpp"
 
+#define EXPAND_VARS(_var) \
+    _var(VarLiteral, LITERAL) \
+    _var(VarOriginal, ORIGINAL) \
+    _var(VarIncrement, INCREMENT) \
+    _var(VarFuzz, FUZZ)
+
+#define VAR_ENUM(_x, _y) ,_y
+#define VAR_VARIANT(_x, _y) ,_x
+
 namespace rene
 {
     struct Var;
-    struct VarLiteral { std::string text; };
-    struct VarOriginal { };
+    struct VarLiteral   { std::string text; };
+    struct VarOriginal  { };
     struct VarIncrement { };
+    struct VarFuzz      { };
 
     using varlist_type = std::vector<Var>;
 
     struct Var
     {
-        enum Kind { EMPTY, LITERAL, ORIGINAL, INCREMENT };
-
-        using var_type = std::variant<
-            std::monostate, VarLiteral, VarOriginal, VarIncrement>;
+        enum Kind{ EMPTY EXPAND_VARS(VAR_ENUM) };
+        using var_type = std::variant<std::monostate EXPAND_VARS(VAR_VARIANT)>;
 
         inline VarLiteral const& asLiteral() const { check(kind() == LITERAL); return std::get<LITERAL>(data); }
 

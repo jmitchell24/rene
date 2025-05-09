@@ -7,7 +7,6 @@
 //
 #include "user_interface.hpp"
 #include "replacer.hpp"
-#include "utility.hpp"
 #include "rene.hpp"
 using namespace rene;
 
@@ -18,6 +17,7 @@ using namespace rene;
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component_options.hpp>
+#include "ftxui_extensions.hpp"
 using namespace ftxui;
 
 //
@@ -31,144 +31,90 @@ using namespace ut;
 //
 #include <regex>
 #include <cstdlib>
+#include <unordered_set>
 using namespace std;
 
 //
 // utilities
 //
 
-/// @brief Display a vertical scrollbar to the left.
-/// colors.
-/// @ingroup dom
-Element ftxui::left_vscroll_indicator(Element child) {
-    class Impl : public Node {
-    public:
-        explicit Impl(Element child) : Node(unpack(std::move(child))) {}
-
-        void ComputeRequirement() override
-        {
-            Node::ComputeRequirement();
-            requirement_ = children_[0]->requirement();
-            requirement_.min_x++;
-        }
-
-        void SetBox(Box box) override
-        {
-            box_ = box;
-            box.x_min++;
-            children_[0]->SetBox(box);
-        }
-
-        void Render(Screen& screen) final
-        {
-            Node::Render(screen);
-
-            Box const& stencil = screen.stencil;
-
-            int size_inner = box_.y_max - box_.y_min;
-            if (size_inner <= 0)
-                return;
-
-            int size_outer = stencil.y_max - stencil.y_min + 1;
-            if (size_outer >= size_inner)
-                return;
-
-            int size = 2 * size_outer * size_outer / size_inner;
-            size = std::max(size, 1);
-
-            int start_y =
-                2 * stencil.y_min +  //
-                2 * (stencil.y_min - box_.y_min) * size_outer / size_inner;
-
-            int x = stencil.x_min;
-            for (int y = stencil.y_min; y <= stencil.y_max; ++y)
-            {
-                int  y_up   = 2 * y + 0;
-                int  y_down = 2 * y + 1;
-                bool up     = (start_y <= y_up) && (y_up <= start_y + size);
-                bool down   = (start_y <= y_down) && (y_down <= start_y + size);
-
-                char const* c = up ? (down ? "┃" : "╹") : (down ? "╻" : " ");  // NOLINT
-                screen.PixelAt(x, y).character = c;
-                screen.PixelAt(x, y).foreground_color = Color::Red;
-            }
-        }
-    };
-    return std::make_shared<Impl>(std::move(child));
-}
 
 vector<string> getTestNames(size_t sz);
 
-// static Elements createItemElements(Replace const& replace, itemlist_type const& items, int selected_index, bool prefix)
-// {
-//     Elements el;
-//     for (size_t i = 0; i < items.size(); ++i)
-//     {
-//         bool is_selected = (i == selected_index);
-//         auto&& it = items[i];
-//
-//         if (is_selected)
-//         {
-//             if (prefix)
-//             {
-//                 ostringstream oss;
-//                 oss << "(" << (i+1) << "/" << items.size() << "> ";
-//                 el.push_back(hbox({
-//                     text(oss.str()) | color(Color::Green) | bold,
-//                     text(it) | inverted
-//                 }) | notflex | focus);
-//             }
-//             else
-//             {
-//                 el.push_back(hbox({
-//                     text(" "),
-//                     text(it) | inverted
-//                 }) | notflex | focus);
-//             }
-//
-//         }
-//         else
-//         {
-//             if (smatch m; regex_search(it, m, replace.match))
-//             {
-//                 el.push_back(hbox({
-//                     text(" "),
-//                     text(m.prefix()),
-//                     text(m.str()) | bgcolor(Color::Blue) | inverted,
-//                     text(m.suffix())
-//                 }) | notflex);
-//             }
-//             else
-//             {
-//                 el.push_back(hbox({
-//                     text(" "),
-//                     text(it)
-//                 }) | notflex);
-//             }
-//
-//
-//         }
-//     }
-//
-//
-//     return el;
-// }
+bool isUnique(names_type const& names)
+{
+    unordered_set<string> tmp;
+    for (auto&& it: names)
+    {
+        if (tmp.contains(it.text_new))
+            return false;
+        tmp.insert(it.text_new);
+    }
+    return true;
+}
 
+bool isNew(names_type const& names)
+{
+    for (auto&& it: names)
+    {
+        if (it.text_new != it.text_old)
+            return true;
+    }
+    return false;
+}
 
-//
-// Name -> Implementation
-//
+names_type getNames(path_type path)
+{
+    using namespace std::filesystem;
 
-// void Name::updateMatches(regex const& r)
-// {
-//     auto beg = sregex_iterator(text_old.begin(), text_old.end(), r);
-//     auto end = sregex_iterator();
-//
-//     matches.clear();
-//     for (auto i = beg; i != end; ++i)
-//         matches.push_back(*i);
-// }
+    names_type names;
 
+    if (!exists(path))
+        return names;
+
+    if (!is_directory(path))
+        return names;
+
+    for (auto&& it : directory_iterator(path))
+    {
+        if (it.is_regular_file())
+            names.push_back({it.path().filename().string(), ""});
+    }
+
+    return names;
+}
+
+void renameFile(path_type path, string const& old_name, string const& new_name)
+{
+    using namespace std::filesystem;
+
+    if (!exists(path))
+        return;
+
+    if (!is_directory(path))
+        return;
+
+    auto old_path = path / old_name;
+    auto new_path = path / new_name;
+
+    if (!exists(old_path))
+        return;
+
+    rename(old_path, new_path);
+}
+
+void renameAllFiles(path_type path, names_type const& names)
+{
+    using namespace std::filesystem;
+
+    if (!exists(path))
+        return;
+
+    for (auto&& it: names)
+    {
+        renameFile(path, it.text_old, it.text_new);
+    }
+}
 
 
 //
@@ -181,70 +127,36 @@ UserInterface::UserInterface()
     for (auto&& it: getTestNames(50))
     {
         m_names.push_back(Name(it));
-
-
-    }
-
-
-}
-
-#if 0
-void callStringSegments(string const& text,
-    vector<smatch> const& matches,
-    function<void(string seg, bool is_match)> const& callback)
-{
-    // If there are no matches, just call the callback with the entire text as a non-match
-    if (matches.empty()) {
-        callback(text, false);
-        return;
-    }
-
-    size_t lastPos = 0;
-
-    // Process each match and the text between matches
-    for (const auto& match : matches) {
-        size_t matchPos = match.position();
-
-        // If there's text before this match, call the callback with it as a non-match
-        if (matchPos > lastPos) {
-            string nonMatchText = text.substr(lastPos, matchPos - lastPos);
-            callback(nonMatchText, false);
-        }
-
-        // Call the callback with the matched text
-        callback(match.str(), true);
-
-        // Update lastPos to be after this match
-        lastPos = matchPos + match.length();
-    }
-
-    // If there's any remaining text after the last match, call the callback with it
-    if (lastPos < text.length()) {
-        string remainingText = text.substr(lastPos);
-        callback(remainingText, false);
     }
 }
-#endif
 
-Elements UserInterface::createReplaceElements()
+Elements UserInterface::createNewNameElements()
 {
     Elements el;
 
     for (size_t i = 0; i < m_names.size(); ++i)
     {
-        bool is_selected = (i == m_highlighted_index);
+
+
         auto&& it = m_names[i];
+        bool is_selected = (i == m_highlighted_index);
+        bool is_empty = it.text_new.empty();
 
         if (is_selected)
+        {
             el.push_back(text(" " + it.text_new) | inverted | focus);
+        }
         else
+        {
             el.push_back(text(" " + it.text_new));
+        }
+
     }
     return el;
 }
 
 
-Elements UserInterface::createMatchElements()
+Elements UserInterface::createOldNameElements()
 {
     Elements el;
     for (size_t i = 0; i < m_names.size(); ++i)
@@ -264,34 +176,9 @@ Elements UserInterface::createMatchElements()
         }
         else
         {
-            // if (smatch m; regex_search(it, m, m_regex))
-            // {
-            //
-            //     el.push_back(hbox({
-            //         text(" "),
-            //         text(m.prefix()),
-            //         text(m.str()) | bgcolor(Color::Blue) | inverted,
-            //         text(m.suffix())
-            //     }) | notflex);
-            // }
-            // else
-            // {
-
-            // }
-
-            Elements hel = { text(" ") };
-
-            // callStringSegments(it.text_old, it.matches, [&](string const& s, bool is_match)
-            // {
-            //     if (is_match)
-            //         hel.push_back(text(s) | bgcolor(Color::Blue) | inverted);
-            //     else
-            //         hel.push_back(text(s));
-            // });
-
             el.push_back(hbox({
-            text(" "),
-            text(it.text_old)
+                text(" "),
+                text(it.text_old)
             }) | notflex);
         }
     }
@@ -300,12 +187,32 @@ Elements UserInterface::createMatchElements()
     return el;
 }
 
-void UserInterface::updateReplaceList()
+void UserInterface::setInfo(string const& s)
 {
+    m_str_error = "";
+    m_str_warn = "";
+    m_str_info = s;
+}
+void UserInterface::setWarn(string const& s)
+{
+    m_str_error = "";
+    m_str_warn = s;
+    m_str_info = "";
+}
+void UserInterface::setError(string const& s)
+{
+    m_str_error = s;
+    m_str_warn = "";
+    m_str_info = "";
+}
+
+void UserInterface::refreshNewNames()
+{
+    setInfo("Press Return to rename");
+
     try
     {
-        m_str_error = "";
-        m_replacer = Replacer(m_str_user_replace);
+        m_replacer = Replacer(m_str_replace);
 
         for (size_t i = 0; i < m_names.size(); ++i)
         {
@@ -321,29 +228,21 @@ void UserInterface::updateReplaceList()
     }
     catch (exception const& e)
     {
-        m_str_error = e.what();
+        setError(e.what());
     }
 
-}
+    if (!isUnique(m_names))
+    {
+        setError("new names are not unique") ;
+        return;
+    }
 
-// void UserInterface::updateMatchList()
-// {
-//     try
-//     {
-//         m_regex = m_str_user_match;
-//
-//         for (auto&& it: m_names)
-//         {
-//             it.updateMatches(m_regex);
-//             it.updateNewText(m_replacer);
-//         }
-//
-//     }
-//     catch (exception const& e)
-//     {
-//         m_str_error = e.what();
-//     }
-// }
+    if (!isNew(m_names))
+    {
+        m_str_error = "no names would be changed";
+        setError("no names to be changed");
+    }
+}
 
 // Component CachedRenderer(std::function<Element()> render, std::function<bool()> needs_refresh)
 // {
@@ -368,39 +267,69 @@ void UserInterface::updateReplaceList()
 //     return Make<Impl>(std::move(render), std::move(needs_refresh));
 // }
 
-int UserInterface::run()
+void UserInterface::changeEditing()
 {
+    m_state = EDITING;
+    setInfo("Press Return to rename");
+}
+
+void UserInterface::changeArming()
+{
+    m_state = ARMING;
+    setWarn("Press Return again to confirm");
+}
+
+int UserInterface::run(filesystem::path path)
+{
+    if (!exists(path))
+        return EXIT_FAILURE;
+
     auto screen = ScreenInteractive::Fullscreen();
 
-    //updateMatchList();
-    updateReplaceList();
+    m_names = getNames(path);
+
+    refreshNewNames();
 
     // Initialize split sizes
     int split_position = 50;
-    int split_position_prev = 0;
 
-    // Create the list components
-    auto match_names_renderer = Renderer(
-        [&] { return vbox(createMatchElements()) | left_vscroll_indicator | frame; });
 
-    auto replace_names_renderer = Renderer(
-        [&] { return vbox(createReplaceElements()) | frame; });
+    auto renderer_old_names = Renderer([&] { return vbox(createOldNameElements()) | left_vscroll_indicator | frame; });
+    auto renderer_new_names = Renderer([&] { return vbox(createNewNameElements()) | frame; });
 
-    auto input_field_replace = Input(&m_str_user_replace, "replace", {
+    auto input_replace = Input(&m_str_replace, "new name", {
         .multiline = false,
-        .on_change = [&]{ updateReplaceList(); }
+        .on_change = [&]{ changeEditing(); refreshNewNames(); },
     });
 
-    auto button = Button("mode", {}, ButtonOption::Ascii());
-
-
+    // auto buttons_renderer = Renderer(_buttons_component, [&]
+    // {
+    //     if (!m_str_error.empty())
+    //         return text(m_str_error) | color(Color::RedLight);
+    //
+    //     switch (button_state)
+    //     {
+    //         case EDITING:
+    //             return button_rename->Render();
+    //
+    //         case ARMING:
+    //             return hbox({
+    //                 button_confirm->Render() | color(Color::GreenLight),
+    //                 button_cancel->Render() | color(Color::RedLight)
+    //             });
+    //
+    //         default:nopath_case(ButtonState);
+    //     }
+    //
+    //     return separatorEmpty();
+    // });
 
     // First construct the resizable split
-    auto _split = ResizableSplitLeft(match_names_renderer, replace_names_renderer, &split_position);
+    auto _split = ResizableSplitLeft(renderer_old_names, renderer_new_names, &split_position);
 
     auto _component = Container::Vertical({
         _split,
-        input_field_replace
+        input_replace
     });
 
     auto _renderer = Renderer(_component, [&]
@@ -409,13 +338,18 @@ int UserInterface::run()
             _split->Render() | flex,
             vbox({
                 hbox({
-                    text("> ") | ( input_field_replace->Focused() ? color(Color::Green) | bold : dim ),
-                    input_field_replace->Render()
+                    text("> ") | ( input_replace->Focused() ? color(Color::Green) | bold : dim ),
+                    input_replace->Render()
+                }),
+                hbox({
+                    text("path: " + path.string()) | dim,
                 }),
                 hbox({
                     text(RENE_NAME " " RENE_VERSION) | dim,
                     separatorEmpty(),
-                    text(m_str_error) | color(Color::OrangeRed1),
+                    text(m_str_error) | color(Color::RedLight),
+                    text(m_str_warn) | color(Color::YellowLight),
+                    text(m_str_info) | color(Color::GreenLight)
                 })
             }) | border
         }) | flex;
@@ -433,21 +367,36 @@ int UserInterface::run()
         {
             if (m_highlighted_index > 0)
                 --m_highlighted_index;
-            split_position_prev = 0;
+            if (isArming())
+                changeEditing();
             return true;
         }
 
         if (e == Event::ArrowDown)
         {
             if (m_highlighted_index < m_names.size()-1)
-            {
                 ++m_highlighted_index;
-            }
-            split_position_prev = 0;
+            if (isArming())
+                changeEditing();
             return true;
         }
 
-        split_position_prev = split_position;
+        if (e == Event::Return)
+        {
+            if (isEditing())
+            {
+                changeArming();
+            }
+            else if (isArming())
+            {
+                changeEditing();
+                renameAllFiles(path, m_names);
+                m_names = getNames(path);
+                refreshNewNames();
+            }
+            return true;
+        }
+
         return false;
     });
 

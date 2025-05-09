@@ -1,7 +1,7 @@
 //
 // Created by james on 02/05/25.
 //
-
+#pragma once
 
 //
 // rene
@@ -23,57 +23,72 @@
 //
 #include <vector>
 #include <string>
-#include <regex>
+#include <filesystem>
+
+#define EXPAND_STATES(_state) \
+    _var(StateEditing, EDITING) \
+    _var(StateArming, ARMING) \
+    _var(StateError, ERROR) \
+    _var(VarFuzz, FUZZ)
+
+#define STATE_ENUM(_x, _y) ,_y
+#define STATE_VARIANT(_x, _y) ,_x
 
 namespace rene
 {
-
-
     struct Name
     {
         std::string text_old;
         std::string text_new;
-        //std::vector<std::smatch> matches;
-
-        Name() { }
-        Name(std::string const& s)
-            : text_old(s), text_new()//, matches()
-        { }
-
-
     };
 
     using names_type = std::vector<Name>;
+    using path_type = std::filesystem::path;
+
 
     class UserInterface
     {
     public:
-        enum Mode { MODE_TEMPLATE, MODE_FIND_REPLACE };
+        enum State { EDITING, ARMING };
 
-        int run();
+
+        using path_type = std::filesystem::path;
+
+        int run(path_type path);
         static UserInterface& instance();
 
     private:
-        size_t m_highlighted_index=0;
+        State m_state = EDITING;
 
+        size_t m_highlighted_index=0;
 
         names_type m_names;
 
-
-
-        std::string m_str_user_match;
-        std::string m_str_user_replace;
+        std::string m_str_replace;
         std::string m_str_error;
+        std::string m_str_warn;
+        std::string m_str_info;
 
-        //std::regex m_regex;
         Replacer m_replacer;
 
         UserInterface();
 
-        void updateReplaceList();
-        //void updateMatchList();
+        void refreshNewNames();
 
-        ftxui::Elements createMatchElements();
-        ftxui::Elements createReplaceElements();
+        ftxui::Elements createOldNameElements();
+        ftxui::Elements createNewNameElements();
+
+        void changeEditing();
+        void changeArming();
+
+        inline bool isEditing() const
+        { return m_state == EDITING; }
+
+        inline bool isArming() const
+        { return m_state == ARMING; }
+
+        void setInfo(std::string const& s);
+        void setWarn(std::string const& s);
+        void setError(std::string const& s);
     };
 }

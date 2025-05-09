@@ -4,12 +4,20 @@ cmake_minimum_required(VERSION 3.13)
 
 project(
     rené
-    VERSION "25.5.5"
+    VERSION "25.5.9"
     DESCRIPTION "a bulk renaming utility"
 )
 
-# releases: gravel, pebble, stone, boulder
-SET(PROJECT_RELEASE "gravel")
+# release names: 
+# algoma
+# wawa
+# thessalon 
+# espanola 
+# sudbury 
+# timmins 
+
+
+SET(PROJECT_RELEASE "algoma")
 
 set(CMAKE_CXX_STANDARD 23) # Enable the C++23 standard
 
@@ -21,7 +29,8 @@ configure_file(
 )
 
 file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.hpp)
-add_executable(rene ${SOURCE_FILES})
+add_executable(rene ${SOURCE_FILES}
+        src/ftxui_extensions.hpp)
 
 #
 # my ut library

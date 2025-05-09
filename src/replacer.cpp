@@ -14,6 +14,7 @@ using namespace rene;
 // ut
 //
 #include <ut/check.hpp>
+#include <ut/random.hpp>
 using namespace ut;
 
 //
@@ -183,6 +184,9 @@ Var tokToVar(Tok const& tok)
 
     auto s = strview(tok.text).trim();
 
+    if (s.empty())
+        return { VarOriginal{} };
+
     if (s == "orig"_sv)
         return { VarOriginal{} };
 
@@ -194,6 +198,9 @@ Var tokToVar(Tok const& tok)
 
     if (s == "increment"_sv)
         return { VarIncrement{} };
+
+    if (s == "fuzz"_sv)
+        return { VarFuzz{} };
 
     throw runtime_error("invalid format specifier: '" + tok.text + "'");
     return {};
@@ -210,6 +217,27 @@ Replacer::Replacer(string const& expr)
         m_vars.push_back(tokToVar(it));
 }
 
+std::string getRandomFakeWord(int i)
+{
+    static std::vector<std::string> random_words = {
+        "acorn", "barnacle", "cactus", "dandelion", "eagle",
+        "falcon", "grape", "hedgehog", "iguana", "jaguar",
+        "kangaroo", "lemur", "mongoose", "nematode", "octopus",
+        "penguin", "quokka", "rhinoceros", "salamander", "toucan",
+        "urchin", "vulture", "wombat", "xenodochial", "yeti",
+        "zebra", "abruptly", "bandwagon", "cemetery", "dizzying",
+        "fjord", "gossip", "hymn", "jazzy", "kiosk",
+        "lumberjack", "mystify", "numbats", "ovary", "pajama",
+        "quixotic", "rhythm", "syzygy", "turbulent", "unbelievable",
+        "vexillology", "wistful", "xylophone", "yachtsman", "zephyr",
+        // Add more words as needed to fill up the array
+    };
+
+    static size_t off = ut_rng.nextu(random_words.size());
+
+    return random_words[(off + i) % random_words.size()];
+}
+
 string Replacer::replace(Args const& args) const
 {
     string res;
@@ -218,11 +246,12 @@ string Replacer::replace(Args const& args) const
     {
         switch (it.kind())
         {
-        case Var::EMPTY: break;
-        case Var::LITERAL: res += it.asLiteral().text; break;
-        case Var::ORIGINAL: res += args.original; break;
-        case Var::INCREMENT: res += to_string(args.increment); break;
-        default:nopath_case(Var::Kind);
+            case Var::EMPTY: break;
+            case Var::LITERAL: res += it.asLiteral().text; break;
+            case Var::ORIGINAL: res += args.original; break;
+            case Var::INCREMENT: res += to_string(args.increment); break;
+            case Var::FUZZ: res += getRandomFakeWord(args.increment); break;
+            default:nopath_case(Var::Kind);
         }
     }
 

@@ -33,6 +33,9 @@ namespace rene
         bool valid() const;
         bool empty() const;
 
+        inline bool flagHelp() const { return anyFlag("help", "h"); }
+        inline bool flagVersion() const { return anyFlag("version", "v"); }
+
         std::string const& programName() const;
         bool flag(std::string const& s) const;
         bool tryGetPositional(size_t index, std::string& value) const;

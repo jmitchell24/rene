@@ -55,6 +55,17 @@ bool CmdArgs::flag(string const& s) const
     return m_flags.contains(s);
 }
 
+bool CmdArgs::tryGetPositional(size_t index, string& value) const
+{
+    if (index < m_positional_args.size())
+    {
+        value = m_positional_args[index];
+        return true;
+    }
+
+    return false;
+}
+
 bool CmdArgs::parse(int argc, char** argv)
 {
     positional_args_type pargs;

@@ -5,8 +5,8 @@
 #pragma once
 
 #define RENE_NAME         "rené"
-#define RENE_VERSION      "25.5.5"
-#define RENE_RELEASE      "gravel"
+#define RENE_VERSION      "25.5.9"
+#define RENE_RELEASE      "algoma"
 
 namespace rene
 {

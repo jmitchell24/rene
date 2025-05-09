@@ -9,7 +9,7 @@ A command-line tool for bulk renaming files
 
 # Screenshots
 
-![screenshot 1](img/2025-05-08_screenshot.png)
+![screenshot 1](img/2025-05-09_screenshot.png)
 
 # Milestones 
 
