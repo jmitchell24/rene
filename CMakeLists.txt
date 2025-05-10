@@ -30,7 +30,9 @@ configure_file(
 
 file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.hpp)
 add_executable(rene ${SOURCE_FILES}
-        src/ftxui_extensions.hpp)
+        src/ftxui_extensions.hpp
+        src/parse_util.hpp
+        src/parse_util.cpp)
 
 #
 # my ut library

@@ -1,49 +1,113 @@
 //
-// Created by james on 04/05/25.
+// Created by james on 10/05/25.
 //
 
 //
 // rene
 //
-#include "replacer.hpp"
-
-#include "ut/string/view.hpp"
+#include "parse_util.hpp"
 using namespace rene;
 
 //
 // ut
 //
-#include <ut/check.hpp>
-#include <ut/random.hpp>
-using namespace ut;
+// using namespace ut;
 
 //
 // std
 //
 #include <stdexcept>
-#include <expected>
 using namespace std;
 
-//
-// Parser Helper
-//
-
-struct Tok
+arglist_type rene::parseArgList(string const& input)
 {
-    enum Kind { TEXT, SPEC };
+    arglist_type args;
+    string current_arg;
 
-    Kind kind;
-    string text;
+    enum QuoteState { QS_NONE, QS_SINGLE, QS_DOUBLE };
 
-    inline bool isText() const { return kind == TEXT; }
-    inline bool isSpec() const { return kind == SPEC; }
-};
+    QuoteState quote_state = QS_NONE;
+    bool escaped = false;
 
-using toklist_type = vector<Tok>;
+    for (auto&& it: input)
+    {
+        // Handle escape character
+        if (escaped)
+        {
+            // In double quotes, only certain characters are treated specially when escaped
+            if (quote_state == QS_DOUBLE)
+            {
+                // In double quotes, \ only escapes $, `, ", \, and newline
+                if (it == '$' || it == '`' || it == '"' || it == '\\' || it == '\n')
+                {
+                    current_arg += it;
+                }
+                else
+                {
+                    // Otherwise, both the backslash and the character are preserved
+                    current_arg += '\\';
+                    current_arg += it;
+                }
+            }
+            else
+            {
+                // Outside quotes or in single quotes, \ escapes any character
+                current_arg += it;
+            }
+            escaped = false;
+            continue;
+        }
 
-toklist_type parseSpecifiers(string const& input, char ch_open = '[', char ch_close = ']')
+        // Check for escape character
+        if (it == '\\' && quote_state != QS_SINGLE)
+        {
+            escaped = true;
+            continue;
+        }
+
+        // Handle quotes
+             if (it == '\'' && quote_state == QS_NONE)   { quote_state = QS_SINGLE; continue; }
+        else if (it == '\'' && quote_state == QS_SINGLE) { quote_state = QS_NONE;   continue; }
+        else if (it == '"'  && quote_state == QS_NONE)   { quote_state = QS_DOUBLE; continue; }
+        else if (it == '"'  && quote_state == QS_DOUBLE) { quote_state = QS_NONE;   continue; }
+
+        // Handle whitespace outside of quotes
+        if (isspace(it) && quote_state == QS_NONE)
+        {
+            if (!current_arg.empty())
+            {
+                args.push_back(current_arg);
+                current_arg.clear();
+            }
+            continue;
+        }
+
+        // Add character to current token
+        current_arg += it;
+    }
+
+    // Handle any remaining escaped character at the end
+    if (escaped)
+        current_arg += '\\';
+
+    // Add the last token if not empty
+    if (!current_arg.empty())
+        args.push_back(current_arg);
+
+
+    // Error state: unclosed quotes (bash would prompt for more input)
+    if (quote_state != QS_NONE)
+        throw runtime_error("unclosed quotes");
+
+    return args;
+}
+
+#define INSERT_FIELD(x_) fields.push_back({ TextField::FIELD, (x_) })
+#define INSERT_TEXT(x_) fields.push_back({ TextField::TEXT, (x_) })
+
+fieldlist_type rene::parseFields(string const& input, char ch_open, char ch_close)
 {
-    toklist_type toks;
+    fieldlist_type fields;
     string current_text;
 
     size_t i = 0;
@@ -61,7 +125,7 @@ toklist_type parseSpecifiers(string const& input, char ch_open = '[', char ch_cl
                 // Add the current text buffer (if any) to tokens
                 if (!current_text.empty())
                 {
-                    toks.push_back({ Tok::TEXT, current_text });
+                    INSERT_TEXT(current_text);
                     current_text.clear();
                 }
 
@@ -76,7 +140,7 @@ toklist_type parseSpecifiers(string const& input, char ch_open = '[', char ch_cl
                 // Add the current text buffer (if any) to tokens
                 if (!current_text.empty())
                 {
-                    toks.push_back({ Tok::TEXT, current_text });
+                    INSERT_TEXT(current_text);
                     current_text.clear();
                 }
 
@@ -133,7 +197,7 @@ toklist_type parseSpecifiers(string const& input, char ch_open = '[', char ch_cl
                     }
                 }
 
-                toks.push_back({Tok::SPEC, processed_content});
+                INSERT_FIELD(processed_content);
                 i = closing_bracket + 1; // Move past the closing bracket
             }
         }
@@ -145,7 +209,7 @@ toklist_type parseSpecifiers(string const& input, char ch_open = '[', char ch_cl
                 // Add the current text buffer (if any) to tokens
                 if (!current_text.empty())
                 {
-                    toks.push_back({Tok::TEXT, current_text});
+                    INSERT_TEXT(current_text);
                     current_text.clear();
                 }
 
@@ -170,90 +234,11 @@ toklist_type parseSpecifiers(string const& input, char ch_open = '[', char ch_cl
     // Add any remaining text
     if (!current_text.empty())
     {
-        toks.push_back({Tok::TEXT, current_text});
+        INSERT_TEXT(current_text);
     }
 
-    return toks;
+    return fields;
 }
 
-
-Var tokToVar(Tok const& tok)
-{
-    if (tok.isText())
-        return { VarLiteral{tok.text} };
-
-    auto s = strview(tok.text).trim();
-
-    if (s.empty())
-        return { VarOriginal{} };
-
-    if (s == "orig"_sv)
-        return { VarOriginal{} };
-
-    if (s == "original"_sv)
-        return { VarOriginal{} };
-
-    if (s == "inc"_sv)
-        return { VarIncrement{} };
-
-    if (s == "increment"_sv)
-        return { VarIncrement{} };
-
-    if (s == "fuzz"_sv)
-        return { VarFuzz{} };
-
-    throw runtime_error("invalid format specifier: '" + tok.text + "'");
-    return {};
-}
-
-//
-// Replacer -> Implementation
-//
-
-Replacer::Replacer(string const& expr)
-{
-    auto toks = parseSpecifiers(expr);
-    for (auto&& it: toks)
-        m_vars.push_back(tokToVar(it));
-}
-
-std::string getRandomFakeWord(int i)
-{
-    static std::vector<std::string> random_words = {
-        "acorn", "barnacle", "cactus", "dandelion", "eagle",
-        "falcon", "grape", "hedgehog", "iguana", "jaguar",
-        "kangaroo", "lemur", "mongoose", "nematode", "octopus",
-        "penguin", "quokka", "rhinoceros", "salamander", "toucan",
-        "urchin", "vulture", "wombat", "xenodochial", "yeti",
-        "zebra", "abruptly", "bandwagon", "cemetery", "dizzying",
-        "fjord", "gossip", "hymn", "jazzy", "kiosk",
-        "lumberjack", "mystify", "numbats", "ovary", "pajama",
-        "quixotic", "rhythm", "syzygy", "turbulent", "unbelievable",
-        "vexillology", "wistful", "xylophone", "yachtsman", "zephyr",
-        // Add more words as needed to fill up the array
-    };
-
-    static size_t off = ut_rng.nextu(random_words.size());
-
-    return random_words[(off + i) % random_words.size()];
-}
-
-string Replacer::replace(Args const& args) const
-{
-    string res;
-
-    for (auto&& it: m_vars)
-    {
-        switch (it.kind())
-        {
-            case Var::EMPTY: break;
-            case Var::LITERAL: res += it.asLiteral().text; break;
-            case Var::ORIGINAL: res += args.original; break;
-            case Var::INCREMENT: res += to_string(args.increment); break;
-            case Var::FUZZ: res += getRandomFakeWord(args.increment); break;
-            default:nopath_case(Var::Kind);
-        }
-    }
-
-    return res;
-}
+#undef INSERT_FIELD
+#undef INSERT_TEXT

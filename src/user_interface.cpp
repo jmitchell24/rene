@@ -6,7 +6,7 @@
 // rene
 //
 #include "user_interface.hpp"
-#include "replacer.hpp"
+#include "fmt.hpp"
 #include "rene.hpp"
 using namespace rene;
 
@@ -100,6 +100,7 @@ void renameFile(path_type path, string const& old_name, string const& new_name)
     if (!exists(old_path))
         return;
 
+    check(!exists(new_path));
     rename(old_path, new_path);
 }
 
@@ -110,10 +111,28 @@ void renameAllFiles(path_type path, names_type const& names)
     if (!exists(path))
         return;
 
-    for (auto&& it: names)
+    if (false)
     {
-        renameFile(path, it.text_old, it.text_new);
+        for (auto&& it: names)
+        {
+            renameFile(path, it.text_old, it.text_new);
+        }
     }
+    else
+    {
+        for (auto&& it: names)
+        {
+            renameFile(path, it.text_old, it.text_new + ".rene");
+        }
+
+        for (auto&& it: names)
+        {
+            renameFile(path, it.text_new + ".rene", it.text_new);
+        }
+    }
+
+
+
 }
 
 
@@ -212,18 +231,18 @@ void UserInterface::refreshNewNames()
 
     try
     {
-        m_replacer = Replacer(m_str_replace);
+        m_expression = fmt::Expression(m_str_expression);
 
         for (size_t i = 0; i < m_names.size(); ++i)
         {
             auto&& it = m_names[i];
 
-            Replacer::Args args {
+            fmt::State fmt_state {
                 .original = it.text_old,
                 .increment = (int)i+1,
             };
 
-            it.text_new = m_replacer.replace(args);
+            it.text_new = m_expression.toString(fmt_state);
         }
     }
     catch (exception const& e)
@@ -297,32 +316,10 @@ int UserInterface::run(filesystem::path path)
     auto renderer_old_names = Renderer([&] { return vbox(createOldNameElements()) | left_vscroll_indicator | frame; });
     auto renderer_new_names = Renderer([&] { return vbox(createNewNameElements()) | frame; });
 
-    auto input_replace = Input(&m_str_replace, "new name", {
+    auto input_replace = Input(&m_str_expression, "expression", {
         .multiline = false,
         .on_change = [&]{ changeEditing(); refreshNewNames(); },
     });
-
-    // auto buttons_renderer = Renderer(_buttons_component, [&]
-    // {
-    //     if (!m_str_error.empty())
-    //         return text(m_str_error) | color(Color::RedLight);
-    //
-    //     switch (button_state)
-    //     {
-    //         case EDITING:
-    //             return button_rename->Render();
-    //
-    //         case ARMING:
-    //             return hbox({
-    //                 button_confirm->Render() | color(Color::GreenLight),
-    //                 button_cancel->Render() | color(Color::RedLight)
-    //             });
-    //
-    //         default:nopath_case(ButtonState);
-    //     }
-    //
-    //     return separatorEmpty();
-    // });
 
     // First construct the resizable split
     auto _split = ResizableSplitLeft(renderer_old_names, renderer_new_names, &split_position);

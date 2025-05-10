@@ -6,7 +6,7 @@
 //
 // rene
 //
-#include "replacer.hpp"
+#include "fmt.hpp"
 
 //
 // ftxui
@@ -64,12 +64,12 @@ namespace rene
 
         names_type m_names;
 
-        std::string m_str_replace;
+        std::string m_str_expression;
         std::string m_str_error;
         std::string m_str_warn;
         std::string m_str_info;
 
-        Replacer m_replacer;
+        fmt::Expression m_expression;
 
         UserInterface();
 
