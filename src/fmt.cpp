@@ -31,11 +31,11 @@ using namespace std;
 
 
 
-VarIncrement varIncrement(bool is_inc, arglist_type const& args)
+VarIndex varIndex(arglist_type const& args)
 {
     if (args.size() == 1)
     {
-        return VarIncrement{ .offset=0 };
+        return VarIndex{ .offset=0 };
     }
 
     if (args.size() == 2)
@@ -43,7 +43,7 @@ VarIncrement varIncrement(bool is_inc, arglist_type const& args)
         int offset;
         auto&& a = args[1];
         from_chars(a.data(), a.data()+a.size(), offset);
-        return VarIncrement{ .offset=offset };
+        return VarIndex{ .offset=offset };
     }
 
     throw runtime_error("invalid args for increment");
@@ -60,22 +60,19 @@ Var fieldToVar(TextField const& tf)
     if (args.empty())
         return { VarOriginal{} };
 
-    if (args[0] == "orig")
-        return { VarOriginal{} };
+    if (args[0] == "name")
+        return { VarOriginalName{} };
 
-    if (args[0] == "original")
-        return { VarOriginal{} };
+    if (args[0] == "ext")
+        return { VarOriginalExt{} };
 
-    if (args[0] == "inc")
-        return { varIncrement(true, args) };
-
-    if (args[0] == "increment")
-        return { varIncrement(true, args) };
+    if (args[0] == "index")
+        return { varIndex(args) };
 
     if (args[0] == "fuzz")
         return { VarFuzz{} };
 
-    throw runtime_error("invalid format specifier: '" + tf.text + "'");
+    throw runtime_error("invalid template: '" + tf.text + "'");
     return {};
 }
 
@@ -121,8 +118,10 @@ string Expression::toString(State const& state) const
             case Var::EMPTY: break;
             case Var::LITERAL: oss << it.asLiteral().text; break;
             case Var::ORIGINAL: oss << state.original; break;
-            case Var::INCREMENT: oss << to_string(state.increment + it.asIncrement().offset); break;
-            case Var::FUZZ: oss << getRandomFakeWord(state.increment); break;
+            case Var::ORIGINAL_EXT: oss << state.originalExt(); break;
+            case Var::ORIGINAL_NAME: oss << state.originalName(); break;
+            case Var::INDEX: oss << to_string(state.index + it.asIndex().offset); break;
+            case Var::FUZZ: oss << getRandomFakeWord(state.index); break;
             default:nopath_case(Var::Kind);
         }
     }

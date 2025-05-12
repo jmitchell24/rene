@@ -1,26 +1,94 @@
-# Rene 
+# René, file auto-namer 
 
-A command-line tool for bulk renaming files 
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![GitHub Release](https://img.shields.io/github/v/release/jmitchell24/rene)](https://github.com/jmitchell24/rene/releases)
+[![Issues](https://img.shields.io/github/issues/jmitchell24/rene)](https://github.com/jmitchell24/rene/issues)
+[![Stars](https://img.shields.io/github/stars/jmitchell24/rene)](https://github.com/username/project-name/stargazers)
 
-# Features 
+![Repo Size](https://img.shields.io/github/repo-size/jmitchell24/rene)
+![Last Commit](https://img.shields.io/github/last-commit/jmitchell24/rene)
 
-- Easy to use TUI interface 
-- Advanced text templating support
+**A powerful, minimalist file auto-namer.**
 
-# Screenshots
+![Project Screenshot](/img/2025-05-09_screenshot.png)
 
-![screenshot 1](img/2025-05-09_screenshot.png)
+## Features
 
-# Milestones 
+- **Rename multiple files at once**
+- **Highly interactive terminal-based user interface**
+- **Intuitive, and powerful name templating system**
 
-- [ ] Core Functionality - Basic cli structure and simple renaming operations
-- [ ] Pattern Matching - Regex support and advanced filtering options
-- [ ] Expression Engine - Custom syntax for complex renaming logic 
-- [ ] Batch Operations - Configuration files and multi-directory processing 
-- [ ] Advanced Features - Plugin architecture and metadata handling 
-- [ ] User Experience - Improved output and usability features 
-- [ ] Performance Optimization - Parallel processing and efficiency improvements 
+## Build Instructions
 
-# License 
+```bash
+# Clone the repository
+git clone https://github.com/jmitchell24/rene.git
 
-This project is licensed under the [MIT License](https://mit-license.org/).
+# Navigate to the project directory
+cd rene 
+
+# Make build directory
+mkdir build
+cd build 
+
+# Generate build files / build project  
+cmake .. 
+cmake --build . 
+```
+
+## Usage
+
+### Basic Usage
+
+```bash
+rene <directory>
+```
+
+### Examples
+
+```bash
+
+# Launch Rene with current working directory
+rene 
+
+# Launch Rene with specified directory 
+rene /home/user/linux-isos
+
+# Show Help 
+rene --help 
+
+# Show Version 
+rene --version
+```
+
+### Key Actions
+
+| Key                                            | Action                  |
+|------------------------------------------------|-------------------------|
+| <kbd>↑</kbd> <kbd>↓</kbd>                      | Navigate file name list |
+| <kbd>Enter</kbd>                               | Confirm / Rename files  |
+| <kbd>Ctrl</kbd> + <kbd>C</kbd>, <kbd>Esc</kbd> | Exit |
+
+### Name Templating Examples
+
+| Template           | Description                                              |
+|--------------------|----------------------------------------------------------|
+| `[]`               | print complete original file name                        |
+| `[name]`           | print original file name WITHOUT extension               |
+| `[ext]`            | print extension of original file name                    |
+| `[index <offset>]` | print index of current file name with offset (default 0) | 
+| `[fuzz]`           | print a random word _(for debug purposes only)_          |
+
+## Roadmap
+
+- [x] Initial release with core functionality (MVP)
+- [ ] Expansion of command-line and terminal-based features 
+- [ ] Desktop GUI
+
+## License
+
+This project is licensed under the MIT License.
+
+---
+
+Made by [James Peter Mitchell](https://jpmitchell.ca)

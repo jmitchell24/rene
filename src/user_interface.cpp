@@ -143,10 +143,7 @@ void renameAllFiles(path_type path, names_type const& names)
 
 UserInterface::UserInterface()
 {
-    for (auto&& it: getTestNames(50))
-    {
-        m_names.push_back(Name(it));
-    }
+    setInfo("test");
 }
 
 Elements UserInterface::createNewNameElements()
@@ -208,21 +205,15 @@ Elements UserInterface::createOldNameElements()
 
 void UserInterface::setInfo(string const& s)
 {
-    m_str_error = "";
-    m_str_warn = "";
-    m_str_info = s;
+    m_message = text("  " + s) | color(Color::GreenLight);
 }
 void UserInterface::setWarn(string const& s)
 {
-    m_str_error = "";
-    m_str_warn = s;
-    m_str_info = "";
+    m_message = text("  " + s) | color(Color::YellowLight);
 }
 void UserInterface::setError(string const& s)
 {
-    m_str_error = s;
-    m_str_warn = "";
-    m_str_info = "";
+    m_message = text("  " + s) | color(Color::RedLight);
 }
 
 void UserInterface::refreshNewNames()
@@ -239,7 +230,7 @@ void UserInterface::refreshNewNames()
 
             fmt::State fmt_state {
                 .original = it.text_old,
-                .increment = (int)i+1,
+                .index = static_cast<int>(i),
             };
 
             it.text_new = m_expression.toString(fmt_state);
@@ -258,44 +249,20 @@ void UserInterface::refreshNewNames()
 
     if (!isNew(m_names))
     {
-        m_str_error = "no names would be changed";
         setError("no names to be changed");
     }
 }
 
-// Component CachedRenderer(std::function<Element()> render, std::function<bool()> needs_refresh)
-// {
-//     class Impl : public ComponentBase
-//     {
-//     public:
-//         explicit Impl(std::function<Element()> render, std::function<bool()> needs_refresh)
-//             : render_(std::move(render)), needs_refresh_(std::move(needs_refresh))
-//         {}
-//
-//         Element OnRender() override
-//         {
-//             if (needs_refresh_())
-//                 cached_element_ = render_();
-//             return cached_element_;
-//         }
-//         std::function<Element()> render_;
-//         std::function<bool()> needs_refresh_;
-//         Element cached_element_;
-//     };
-//
-//     return Make<Impl>(std::move(render), std::move(needs_refresh));
-// }
-
 void UserInterface::changeEditing()
 {
     m_state = EDITING;
-    setInfo("Press Return to rename");
+    setInfo("Press Enter to rename");
 }
 
 void UserInterface::changeArming()
 {
     m_state = ARMING;
-    setWarn("Press Return again to confirm");
+    setWarn("Press Enter again to confirm");
 }
 
 int UserInterface::run(filesystem::path path)
@@ -338,15 +305,11 @@ int UserInterface::run(filesystem::path path)
                     text("> ") | ( input_replace->Focused() ? color(Color::Green) | bold : dim ),
                     input_replace->Render()
                 }),
-                hbox({
-                    text("path: " + path.string()) | dim,
-                }),
+                m_message,
                 hbox({
                     text(RENE_NAME " " RENE_VERSION) | dim,
                     separatorEmpty(),
-                    text(m_str_error) | color(Color::RedLight),
-                    text(m_str_warn) | color(Color::YellowLight),
-                    text(m_str_info) | color(Color::GreenLight)
+                    text("path: " + path.string()) | dim
                 })
             }) | border
         }) | flex;
@@ -354,7 +317,7 @@ int UserInterface::run(filesystem::path path)
 
     auto _event_catch = CatchEvent(_renderer, [&](Event e)
     {
-        if (e == Event::Escape || e == Event::q)
+        if (e == Event::Escape)
         {
             screen.Exit();
             return true;
@@ -397,6 +360,8 @@ int UserInterface::run(filesystem::path path)
         return false;
     });
 
+    input_replace->TakeFocus();
+
     screen.Loop(_event_catch);
     return EXIT_SUCCESS;
 }
@@ -408,82 +373,3 @@ UserInterface& UserInterface::instance()
     return x; 
 }
 
-vector<string> getTestNames(size_t sz)
-{
-    static vector<string> names = {
-        "The Shawshank Redemption (1994)",
-        "The Godfather (1972)",
-        "The Dark Knight (2008)",
-        "Pulp Fiction (1994)",
-        "Schindler's List (1993)",
-        "Forrest Gump (1994)",
-        "Fight Club (1999)",
-        "Inception (2010)",
-        "The Matrix (1999)",
-        "Goodfellas (1990)",
-        "One Flew Over the Cuckoo's Nest (1975)",
-        "Se7en (1995)",
-        "The Lord of the Rings: The Return of the King (2003)",
-        "Star Wars: Episode V - The Empire Strikes Back (1980)",
-        "Titanic (1997)",
-        "City of God (2002)",
-        "Sunset Blvd. (1950)",
-        "Casablanca (1942)",
-        "Psycho (1960)",
-        "12 Angry Men (1957)",
-        "In the Mood for Love (2000)",
-        "Life Is Beautiful (1997)",
-        "The Pianist (2002)",
-        "Forrest Gump (1994)",
-        "The Silence of the Lambs (1991)",
-        "It's a Wonderful Life (1946)",
-        "La Haine (1995)",
-        "The Usual Suspects (1995)",
-        "Léon: The Professional (1994)",
-        "North by Northwest (1959)",
-        "Double Indemnity (1944)",
-        "Gone with the Wind (1939)",
-        "The Conversation (1974)",
-        "Rashomon (1950)",
-        "Alien (1979)",
-        "Vertigo (1958)",
-        "Taxi Driver (1976)",
-        "Brazil (1985)",
-        "Juno (2007)",
-        "Up (2009)",
-        "Parasite (2019)",
-        "Moonlight (2016)",
-        "The Shape of Water (2017)",
-        "Green Book (2018)",
-        "The Irishman (2019)",
-        "Django Unchained (2012)",
-        "The Social Network (2010)"
-    };
-
-    static vector<string> exts = {
-        "mp4",
-        "mkv",
-        "avi",
-        "mov",
-        "wmv",
-        "flv",
-        "3gp",
-        "rmvb",
-        "iso",
-        "rom"
-    };
-
-
-    vector<string> res;
-
-
-
-    for (size_t i = 0; i < sz; ++i)
-    {
-        res.push_back(
-            ut_rng.choose(names.begin(), names.end()) + "." +
-            ut_rng.choose(exts.begin(), exts.end()));
-    }
-
-    return res;
-}

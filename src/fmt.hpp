@@ -4,16 +4,25 @@
 
 #pragma once
 
+//
+// std
+//
 #include <string>
 #include <variant>
 #include <vector>
 
-#include "ut/check.hpp"
+//
+// ut
+//
+#include <ut/string.hpp>
+#include <ut/check.hpp>
 
 #define EXPAND_VARS(_var) \
     _var(Literal, LITERAL) \
     _var(Original, ORIGINAL) \
-    _var(Increment, INCREMENT) \
+    _var(OriginalName, ORIGINAL_NAME) \
+    _var(OriginalExt, ORIGINAL_EXT) \
+    _var(Index, INDEX) \
     _var(Fuzz, FUZZ)
 
 #define VAR_ENUM(_x, _y) ,_y
@@ -26,7 +35,9 @@ namespace rene::fmt
     struct Var;
     struct VarLiteral   { std::string text; };
     struct VarOriginal  { };
-    struct VarIncrement { int offset; };
+    struct VarOriginalName { };
+    struct VarOriginalExt { };
+    struct VarIndex { int offset; };
     struct VarFuzz      { };
 
     using varlist_type = std::vector<Var>;
@@ -44,8 +55,20 @@ namespace rene::fmt
     struct State
     {
         std::string original;
-        int increment;
-        int decrement;
+        int index;
+
+        inline std::string originalExt() const
+        {
+            auto splits = ut::strview(original).split(".");
+            return splits.empty() ? "" : splits.back().str();
+        }
+
+        inline std::string originalName() const
+        {
+            auto sv = ut::strview(original);
+            auto splits = sv.split(".");
+            return splits.empty() ? original : sv.skipEnd(splits.back().size()+1).str();
+        }
     };
 
     class Expression

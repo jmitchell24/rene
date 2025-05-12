@@ -17,7 +17,7 @@ project(
 # timmins 
 
 
-SET(PROJECT_RELEASE "algoma")
+SET(PROJECT_RELEASE "pre-release")
 
 set(CMAKE_CXX_STANDARD 23) # Enable the C++23 standard
 

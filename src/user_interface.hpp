@@ -65,9 +65,7 @@ namespace rene
         names_type m_names;
 
         std::string m_str_expression;
-        std::string m_str_error;
-        std::string m_str_warn;
-        std::string m_str_info;
+        ftxui::Element m_message;
 
         fmt::Expression m_expression;
 
