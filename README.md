@@ -1,16 +1,16 @@
 # René, file auto-namer 
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![GitHub Release](https://img.shields.io/github/v/release/jmitchell24/rene)](https://github.com/jmitchell24/rene/releases)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.txt)
+![Last Commit](https://img.shields.io/github/last-commit/jmitchell24/rene)
+[![GitHub Release](https://img.shields.io/github/v/release/jmitchell24/rene?include_prereleases)](https://github.com/jmitchell24/rene/releases)
 [![Issues](https://img.shields.io/github/issues/jmitchell24/rene)](https://github.com/jmitchell24/rene/issues)
 [![Stars](https://img.shields.io/github/stars/jmitchell24/rene)](https://github.com/username/project-name/stargazers)
-
 ![Repo Size](https://img.shields.io/github/repo-size/jmitchell24/rene)
-![Last Commit](https://img.shields.io/github/last-commit/jmitchell24/rene)
+
 
 **A powerful, minimalist file auto-namer.**
 
-![Project Screenshot](/img/2025-05-09_screenshot.png)
+![Project Screenshot](/img/2025-05-12_screenshot.png)
 
 ## Features
 
