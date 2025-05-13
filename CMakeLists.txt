@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.13)
 
 project(
     rené
-    VERSION "25.5.9"
+    VERSION "25.5.13"
     DESCRIPTION "a bulk renaming utility"
 )
 
