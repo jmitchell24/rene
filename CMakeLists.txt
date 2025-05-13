@@ -22,6 +22,8 @@ set(PROJECT_BINARY "rene")
 
 # Enable the C++17 standard
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Configure headers
 configure_file(
