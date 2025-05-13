@@ -46,7 +46,7 @@ bool isUnique(names_type const& names)
     unordered_set<string> tmp;
     for (auto&& it: names)
     {
-        if (tmp.contains(it.text_new))
+        if (tmp.find(it.text_new) != tmp.end())
             return false;
         tmp.insert(it.text_new);
     }

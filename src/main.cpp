@@ -2,6 +2,8 @@
 //
 // rene
 //
+#include <unistd.h>
+
 #include "cmd.hpp"
 #include "user_interface.hpp"
 using namespace rene;

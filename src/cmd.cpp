@@ -52,7 +52,7 @@ string const& CmdArgs::programName() const
 
 bool CmdArgs::flag(string const& s) const
 {
-    return m_flags.contains(s);
+    return m_flags.find(s) != m_flags.end();
 }
 
 bool CmdArgs::tryGetPositional(size_t index, string& value) const

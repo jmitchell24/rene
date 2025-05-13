@@ -17,22 +17,24 @@ project(
 # timmins 
 
 
-SET(PROJECT_RELEASE "pre-release")
+set(PROJECT_RELEASE "pre-release")
+set(PROJECT_BINARY "rene")
 
-set(CMAKE_CXX_STANDARD 23) # Enable the C++23 standard
+# Enable the C++17 standard
+set(CMAKE_CXX_STANDARD 17)
 
 # Configure headers
 configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/rene.hpp.in
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/rene.hpp
+    src/rene.hpp.in
+    src/rene.hpp
     @ONLY
 )
 
-file(GLOB_RECURSE SOURCE_FILES src/*.cpp src/*.hpp)
-add_executable(rene ${SOURCE_FILES}
-        src/ftxui_extensions.hpp
-        src/parse_util.hpp
-        src/parse_util.cpp)
+file(GLOB_RECURSE SOURCE_FILES
+        src/*.cpp
+        src/*.hpp
+)
+add_executable(rene ${SOURCE_FILES})
 
 #
 # my ut library
@@ -43,7 +45,7 @@ FetchContent_Declare(
         ut
         GIT_REPOSITORY https://github.com/jmitchell24/ut.git)
 FetchContent_MakeAvailable(ut)
-target_link_libraries(rene PRIVATE ut)
+target_link_libraries(${PROJECT_BINARY} PRIVATE ut)
 
 # FTXUI
 FetchContent_Declare(ftxui
@@ -52,9 +54,5 @@ FetchContent_Declare(ftxui
 )
 
 FetchContent_GetProperties(ftxui)
-if(NOT ftxui_POPULATED)
-    FetchContent_Populate(ftxui)
-    add_subdirectory(${ftxui_SOURCE_DIR} ${ftxui_BINARY_DIR} EXCLUDE_FROM_ALL)
-endif()
-
-target_link_libraries(rene PRIVATE ftxui::dom ftxui::screen ftxui::component)
+FetchContent_MakeAvailable(ftxui)
+target_link_libraries(${PROJECT_BINARY} PRIVATE ftxui::dom ftxui::screen ftxui::component)
