@@ -7,7 +7,6 @@
 [![Stars](https://img.shields.io/github/stars/jmitchell24/rene)](https://github.com/username/project-name/stargazers)
 ![Repo Size](https://img.shields.io/github/repo-size/jmitchell24/rene)
 
-
 **A powerful, minimalist file auto-namer.**
 
 ![Project Screenshot](/img/2025-05-12_screenshot.png)
