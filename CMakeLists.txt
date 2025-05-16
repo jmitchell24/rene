@@ -14,7 +14,8 @@ project(
 # thessalon 
 # espanola 
 # sudbury 
-# timmins 
+# timmins
+# test 
 
 
 set(PROJECT_RELEASE "pre-release")
