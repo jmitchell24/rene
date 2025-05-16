@@ -108,11 +108,11 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           name: Release ${{ steps.get_version.outputs.VERSION }}
           tag_name: ${{ github.ref }}
           draft: false
           prerelease: false
-          generate_release_notes: true
+          generate_release_notes: false
           files: artifacts/**/*
