@@ -3,13 +3,13 @@ name: Build and Release C++ Application
 on:
   push:
     tags:
-      - 'v*'  # Trigger on tags matching v* format
+      - 'v[0-9]+.[0-9]+.[0-9]+'  # Trigger on tags matching v1.2.3 format
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
   # Name of your application executable
-  APP_NAME: René
+  APP_NAME: my-cpp-app
 
 jobs:
   build:
@@ -20,71 +20,87 @@ jobs:
       matrix:
         config:
           - {
-              name: "Ubuntu 22.04 GCC",
-              os: ubuntu-22.04,
-              artifact_name: "linux",
-              cc: "gcc",
-              cxx: "g++",
-              binary_extension: ""
-            }
+            name: "Windows Latest MSVC",
+            os: windows-latest,
+            artifact_name: "windows",
+            cc: "cl",
+            cxx: "cl",
+            binary_extension: ".exe"
+          }
+          - {
+            name: "Ubuntu Latest GCC",
+            os: ubuntu-latest,
+            artifact_name: "linux",
+            cc: "gcc",
+            cxx: "g++",
+            binary_extension: ""
+          }
+          - {
+            name: "macOS Latest Clang",
+            os: macos-latest,
+            artifact_name: "macos",
+            cc: "clang",
+            cxx: "clang++",
+            binary_extension: ""
+          }
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0  # Fetch all history for all tags and branches
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for all tags and branches
 
-    - name: Get Version
-      id: get_version
-      shell: bash
-      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      - name: Get Version
+        id: get_version
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-    - name: Configure CMake
-      shell: bash
-      run: |
-        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      - name: Configure CMake
+        shell: bash
+        run: |
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
 
-    - name: Build
-      shell: bash
-      run: |
-        cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      - name: Build
+        shell: bash
+        run: |
+          cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
-    - name: Run Tests
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      # Add your test command here
-      run: |
-        ctest -C ${{env.BUILD_TYPE}} --output-on-failure
+      - name: Run Tests
+        working-directory: ${{github.workspace}}/build
+        shell: bash
+        # Add your test command here
+        run: |
+          ctest -C ${{env.BUILD_TYPE}} --output-on-failure
 
-    - name: Create Package
-      shell: bash
-      run: |
-        mkdir -p ${{github.workspace}}/package
-        cp ${{github.workspace}}/build/${{env.APP_NAME}}${{ matrix.config.binary_extension }} ${{github.workspace}}/package/
-        # Copy any additional files needed for your application
-        cp -r ${{github.workspace}}/README.md ${{github.workspace}}/package/ || true
-        cp -r ${{github.workspace}}/LICENSE ${{github.workspace}}/package/ || true
-        cp -r ${{github.workspace}}/docs ${{github.workspace}}/package/ || true
+      - name: Create Package
+        shell: bash
+        run: |
+          mkdir -p ${{github.workspace}}/package
+          cp ${{github.workspace}}/build/${{env.APP_NAME}}${{ matrix.config.binary_extension }} ${{github.workspace}}/package/
+          # Copy any additional files needed for your application
+          cp -r ${{github.workspace}}/README.md ${{github.workspace}}/package/ || true
+          cp -r ${{github.workspace}}/LICENSE ${{github.workspace}}/package/ || true
+          cp -r ${{github.workspace}}/docs ${{github.workspace}}/package/ || true
 
-    - name: Create Archive
-      id: create_archive
-      shell: bash
-      run: |
-        cd ${{github.workspace}}
-        ARCHIVE_NAME="${{env.APP_NAME}}-${{ steps.get_version.outputs.VERSION }}-${{ matrix.config.artifact_name }}"
-        if [ "${{ matrix.config.os }}" == "windows-latest" ]; then
-          7z a -tzip "${ARCHIVE_NAME}.zip" ./package/*
-          echo "ARCHIVE=${ARCHIVE_NAME}.zip" >> $GITHUB_OUTPUT
-        else
-          tar -czf "${ARCHIVE_NAME}.tar.gz" -C package .
-          echo "ARCHIVE=${ARCHIVE_NAME}.tar.gz" >> $GITHUB_OUTPUT
-        fi
+      - name: Create Archive
+        id: create_archive
+        shell: bash
+        run: |
+          cd ${{github.workspace}}
+          ARCHIVE_NAME="${{env.APP_NAME}}-${{ steps.get_version.outputs.VERSION }}-${{ matrix.config.artifact_name }}"
+          if [ "${{ matrix.config.os }}" == "windows-latest" ]; then
+            7z a -tzip "${ARCHIVE_NAME}.zip" ./package/*
+            echo "ARCHIVE=${ARCHIVE_NAME}.zip" >> $GITHUB_OUTPUT
+          else
+            tar -czf "${ARCHIVE_NAME}.tar.gz" -C package .
+            echo "ARCHIVE=${ARCHIVE_NAME}.tar.gz" >> $GITHUB_OUTPUT
+          fi
 
-    - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: ${{ matrix.config.artifact_name }}
-        path: ${{github.workspace}}/${{ steps.create_archive.outputs.ARCHIVE }}
-        if-no-files-found: error
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.config.artifact_name }}
+          path: ${{github.workspace}}/${{ steps.create_archive.outputs.ARCHIVE }}
+          if-no-files-found: error
 
   release:
     name: Create Release
@@ -92,14 +108,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Get Version
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
 
