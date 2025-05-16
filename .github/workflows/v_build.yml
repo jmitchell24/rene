@@ -3,13 +3,13 @@ name: Build and Release C++ Application
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'  # Trigger on tags matching v1.2.3 format
+      - 'v*'  # Trigger on tags matching v* format
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
+  BUILD_TYPE: MinSizeRel
   # Name of your application executable
-  APP_NAME: my-cpp-app
+  APP_NAME: rene
 
 jobs:
   build:
@@ -20,27 +20,11 @@ jobs:
       matrix:
         config:
           - {
-            name: "Windows Latest MSVC",
-            os: windows-latest,
-            artifact_name: "windows",
-            cc: "cl",
-            cxx: "cl",
-            binary_extension: ".exe"
-          }
-          - {
-            name: "Ubuntu Latest GCC",
-            os: ubuntu-latest,
+            name: "Ubuntu 22.04 GCC",
+            os: ubuntu-22.04,
             artifact_name: "linux",
             cc: "gcc",
             cxx: "g++",
-            binary_extension: ""
-          }
-          - {
-            name: "macOS Latest Clang",
-            os: macos-latest,
-            artifact_name: "macos",
-            cc: "clang",
-            cxx: "clang++",
             binary_extension: ""
           }
 
