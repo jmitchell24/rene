@@ -18,7 +18,7 @@ project(
 # test
 
 
-set(PROJECT_RELEASE "pre-release")
+set(PROJECT_RELEASE "test6")
 set(PROJECT_BINARY "rene")
 
 # Enable the C++17 standard
