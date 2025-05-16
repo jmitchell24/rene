@@ -1,14 +1,31 @@
-//
-// Created by james on 02/05/25.
-//
-
 #pragma once
 
 #define RENE_NAME         "@PROJECT_NAME@"
 #define RENE_VERSION      "@PROJECT_VERSION@"
 #define RENE_RELEASE      "@PROJECT_RELEASE@"
+#define RENE_DESCRIPTION  "@PROJECT_DESCRIPTION"
 
 namespace rene
 {
+    auto static const RENE_HELP_TEXT = ut::cstrview(R"(
 
+usage: rene <directory>
+
+@PROJECT_NAME@, @PROJECT_DESCRIPTION@
+
+Options:
+    -h, --help       Display this help message and exit.
+    -v, --version    Show version information and exit.
+
+For more information, visit: https://github.com/jmitchell24/rene
+
+    )").trim();
+
+    auto static const RENE_VERSION_TEXT = ut::cstrview(R"(
+
+@PROJECT_NAME@, version @PROJECT_VERSION@
+Copyright © 2025 James Peter Mitchell
+For more information, visit: https://github.com/jmitchell24/rene
+
+    )").trim();
 }

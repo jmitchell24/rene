@@ -35,13 +35,12 @@ using namespace ut;
 using namespace std;
 
 //
-// utilities
+// NameList Implementation
 //
 
 
-vector<string> getTestNames(size_t sz);
 
-bool isUnique(names_type const& names)
+bool NameList::isNewTextUnique() const
 {
     unordered_set<string> tmp;
     for (auto&& it: names)
@@ -53,7 +52,19 @@ bool isUnique(names_type const& names)
     return true;
 }
 
-bool isNew(names_type const& names)
+bool NameList::isOldTextUnique() const
+{
+    unordered_set<string> tmp;
+    for (auto&& it: names)
+    {
+        if (tmp.find(it.text_old) != tmp.end())
+            return false;
+        tmp.insert(it.text_old);
+    }
+    return true;
+}
+
+bool NameList::hasNewNames() const
 {
     for (auto&& it: names)
     {
@@ -63,17 +74,32 @@ bool isNew(names_type const& names)
     return false;
 }
 
-names_type getNames(path_type path)
+pair<size_t, size_t> NameList::getExtents() const
+{
+    size_t cnt_new=0, cnt_old=0;
+
+    for (auto&& it: names)
+    {
+        if (cnt_new < it.text_new.size())
+            cnt_new = it.text_new.size();
+
+        if (cnt_old < it.text_old.size())
+            cnt_old = it.text_old.size();
+    }
+
+    return { cnt_new, cnt_old };
+}
+
+void NameList::loadFilenames(path_type const& path)
 {
     using namespace std::filesystem;
-
     names_type names;
 
     if (!exists(path))
-        return names;
+        return;
 
     if (!is_directory(path))
-        return names;
+        return;
 
     for (auto&& it : directory_iterator(path))
     {
@@ -81,7 +107,7 @@ names_type getNames(path_type path)
             names.push_back({it.path().filename().string(), ""});
     }
 
-    return names;
+    this->names = move(names);
 }
 
 void renameFile(path_type path, string const& old_name, string const& new_name)
@@ -104,7 +130,7 @@ void renameFile(path_type path, string const& old_name, string const& new_name)
     rename(old_path, new_path);
 }
 
-void renameAllFiles(path_type path, names_type const& names)
+void renameAllFiles(path_type path, NameList const& names)
 {
     using namespace std::filesystem;
 
@@ -113,19 +139,19 @@ void renameAllFiles(path_type path, names_type const& names)
 
     if (false)
     {
-        for (auto&& it: names)
+        for (auto&& it: names.names)
         {
             renameFile(path, it.text_old, it.text_new);
         }
     }
     else
     {
-        for (auto&& it: names)
+        for (auto&& it: names.names)
         {
             renameFile(path, it.text_old, it.text_new + ".rene");
         }
 
-        for (auto&& it: names)
+        for (auto&& it: names.names)
         {
             renameFile(path, it.text_new + ".rene", it.text_new);
         }
@@ -180,20 +206,20 @@ Elements UserInterface::createOldNameElements()
         bool is_selected = (i == m_highlighted_index);
         auto&& it = m_names[i];
 
+        auto line_num = text(ut_printer("%3d ", i+1).str()) | color(Color::YellowLight);
+
         if (is_selected)
         {
-            ostringstream oss;
-            oss << "(" << (i+1) << "/" << m_names.size() << "> ";
             el.push_back(hbox({
-                text(oss.str()) | color(Color::Green) | bold,
-                text(it.text_old) | inverted
+                line_num,
+                text(it.text_old) | color(Color::RedLight),
             }) | notflex | focus);
 
         }
         else
         {
             el.push_back(hbox({
-                text(" "),
+                line_num,
                 text(it.text_old)
             }) | notflex);
         }
@@ -241,13 +267,13 @@ void UserInterface::refreshNewNames()
         setError(e.what());
     }
 
-    if (!isUnique(m_names))
+    if (!m_names.isNewTextUnique())
     {
         setError("new names are not unique") ;
         return;
     }
 
-    if (!isNew(m_names))
+    if (!m_names.hasNewNames())
     {
         setError("no names to be changed");
     }
@@ -272,13 +298,12 @@ int UserInterface::run(filesystem::path path)
 
     auto screen = ScreenInteractive::Fullscreen();
 
-    m_names = getNames(path);
+    m_names.loadFilenames(path);
 
     refreshNewNames();
 
     // Initialize split sizes
     int split_position = 50;
-
 
     auto renderer_old_names = Renderer([&] { return vbox(createOldNameElements()) | left_vscroll_indicator | frame; });
     auto renderer_new_names = Renderer([&] { return vbox(createNewNameElements()) | frame; });
@@ -351,7 +376,8 @@ int UserInterface::run(filesystem::path path)
             {
                 changeEditing();
                 renameAllFiles(path, m_names);
-                m_names = getNames(path);
+
+                m_names.loadFilenames(path);
                 refreshNewNames();
             }
             return true;

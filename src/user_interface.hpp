@@ -42,6 +42,35 @@ namespace rene
         std::string text_new;
     };
 
+    struct NameList
+    {
+        using path_type = std::filesystem::path;
+        using namelist_type = std::vector<Name>;
+        namelist_type names;
+
+
+
+        inline bool empty() const
+        { return names.empty(); }
+
+        inline size_t size() const
+        { return names.size(); }
+
+        bool isOldTextUnique() const;
+        bool isNewTextUnique() const;
+
+        bool hasNewNames() const;
+        std::pair<size_t, size_t> getExtents() const;
+
+        inline Name& operator[] (size_t i)
+        { return names[i]; }
+
+        inline Name const& operator[] (size_t i) const
+        { return names[i]; }
+
+        void loadFilenames( path_type const& path);
+    };
+
     using names_type = std::vector<Name>;
     using path_type = std::filesystem::path;
 
@@ -62,7 +91,7 @@ namespace rene
 
         size_t m_highlighted_index=0;
 
-        names_type m_names;
+        NameList m_names;
 
         std::string m_str_expression;
         ftxui::Element m_message;

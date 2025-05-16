@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include "cmd.hpp"
+#include "rene.hpp"
 #include "user_interface.hpp"
 using namespace rene;
 
@@ -24,23 +25,7 @@ using namespace std;
 #include <string>
 
 
-auto g_help_text =(R"(
-usage: rene <directory>
 
-René, a tui bulk file renamer
-
-Options:
-    -h, --help       Display this help message and exit.
-    -v, --version    Show version information and exit.
-
-For more information, visit: https://github.com/jmitchell24/rene
-)"_sv).trim();
-
-auto g_version_text = (R"(
-René, version 25.5.9 'algoma'
-Copyright © 2025 James Peter Mitchell
-For more information, visit: https://github.com/jmitchell24/rene
-)"_sv).trim();
 
 int main(int argc, char** argv)
 {
@@ -48,13 +33,13 @@ int main(int argc, char** argv)
 
     if (args.flagHelp())
     {
-        cout << g_help_text << endl;
+        cout << RENE_HELP_TEXT << endl;
         return EXIT_SUCCESS;
     }
 
     if (args.flagVersion())
     {
-        cout << g_version_text << endl;
+        cout << RENE_VERSION_TEXT << endl;
         return EXIT_SUCCESS;
     }
 

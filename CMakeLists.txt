@@ -4,8 +4,8 @@ cmake_minimum_required(VERSION 3.13)
 
 project(
     rené
-    VERSION "25.5.13"
-    DESCRIPTION "a bulk renaming utility"
+    VERSION "25.5.16"
+    DESCRIPTION "a powerful & minimalist auto-namer."
 )
 
 # release names: 
@@ -27,9 +27,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Configure headers
 configure_file(
-    src/rene.hpp.in
-    src/rene.hpp
-    @ONLY
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/rene.hpp.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/rene.hpp"
 )
 
 file(GLOB_RECURSE SOURCE_FILES
