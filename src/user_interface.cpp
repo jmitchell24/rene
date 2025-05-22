@@ -8,6 +8,8 @@
 #include "user_interface.hpp"
 #include "fmt.hpp"
 #include "rene.hpp"
+#include "ut/time.hpp"
+#include "virtual_line_list.hpp"
 using namespace rene;
 
 //
@@ -17,6 +19,7 @@ using namespace rene;
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
 #include <ftxui/component/component_options.hpp>
+#include <ftxui/component/loop.hpp>
 #include "ftxui_extensions.hpp"
 using namespace ftxui;
 
@@ -32,6 +35,7 @@ using namespace ut;
 #include <regex>
 #include <cstdlib>
 #include <unordered_set>
+#include <format>
 using namespace std;
 
 //
@@ -40,75 +44,7 @@ using namespace std;
 
 
 
-bool NameList::isNewTextUnique() const
-{
-    unordered_set<string> tmp;
-    for (auto&& it: names)
-    {
-        if (tmp.find(it.text_new) != tmp.end())
-            return false;
-        tmp.insert(it.text_new);
-    }
-    return true;
-}
 
-bool NameList::isOldTextUnique() const
-{
-    unordered_set<string> tmp;
-    for (auto&& it: names)
-    {
-        if (tmp.find(it.text_old) != tmp.end())
-            return false;
-        tmp.insert(it.text_old);
-    }
-    return true;
-}
-
-bool NameList::hasNewNames() const
-{
-    for (auto&& it: names)
-    {
-        if (it.text_new != it.text_old)
-            return true;
-    }
-    return false;
-}
-
-pair<size_t, size_t> NameList::getExtents() const
-{
-    size_t cnt_new=0, cnt_old=0;
-
-    for (auto&& it: names)
-    {
-        if (cnt_new < it.text_new.size())
-            cnt_new = it.text_new.size();
-
-        if (cnt_old < it.text_old.size())
-            cnt_old = it.text_old.size();
-    }
-
-    return { cnt_new, cnt_old };
-}
-
-void NameList::loadFilenames(path_type const& path)
-{
-    using namespace std::filesystem;
-    names_type names;
-
-    if (!exists(path))
-        return;
-
-    if (!is_directory(path))
-        return;
-
-    for (auto&& it : directory_iterator(path))
-    {
-        if (it.is_regular_file())
-            names.push_back({it.path().filename().string(), ""});
-    }
-
-    this->names = move(names);
-}
 
 void renameFile(path_type path, string const& old_name, string const& new_name)
 {
@@ -162,6 +98,7 @@ void renameAllFiles(path_type path, NameList const& names)
 }
 
 
+
 //
 // UserInterface -> Implementation
 //
@@ -175,56 +112,72 @@ UserInterface::UserInterface()
 Elements UserInterface::createNewNameElements()
 {
     Elements el;
-
     for (size_t i = 0; i < m_names.size(); ++i)
     {
-
-
         auto&& it = m_names[i];
         bool is_selected = (i == m_highlighted_index);
-        bool is_empty = it.text_new.empty();
-
-        if (is_selected)
-        {
-            el.push_back(text(" " + it.text_new) | inverted | focus);
-        }
-        else
-        {
-            el.push_back(text(" " + it.text_new));
-        }
-
+        el.push_back(createNewNameElement(i+1, it, is_selected));
     }
     return el;
 }
+
+void UserInterface::updateHighlightedIndex(size_t new_idx)
+{
+    if (m_highlighted_index == new_idx)
+        return;
+
+    if (new_idx >= m_names.size())
+        return;
+
+    m_old_names[m_highlighted_index] = createOldNameElement(m_highlighted_index+1, m_names[m_highlighted_index], false);
+    m_new_names[m_highlighted_index] = createNewNameElement(m_highlighted_index+1, m_names[m_highlighted_index], false);
+
+    m_highlighted_index = new_idx;
+
+    m_old_names[m_highlighted_index] = createOldNameElement(m_highlighted_index+1, m_names[m_highlighted_index], true);
+    m_new_names[m_highlighted_index] = createNewNameElement(m_highlighted_index+1, m_names[m_highlighted_index], true);
+}
+
+Element UserInterface::createNewNameElement(int ln, Name const& name, bool is_selected)
+{
+    if (is_selected)
+    {
+        return text(" " + name.text_new) | inverted | focus;
+    }
+    return text(" " + name.text_new);
+
+}
+
+Element UserInterface::createOldNameElement(int ln, Name const& name, bool is_selected)
+{
+    auto line_num = text(format("{} ", ln)) | color(Color::YellowLight);
+
+    if (is_selected)
+    {
+        return hbox({
+            line_num,
+            text(name.text_old) | color(Color::RedLight),
+        }) | notflex | focus;
+    }
+
+    return hbox({
+        line_num,
+        text(name.text_old)
+    }) | notflex;
+}
+
 
 
 Elements UserInterface::createOldNameElements()
 {
     Elements el;
+
     for (size_t i = 0; i < m_names.size(); ++i)
     {
         bool is_selected = (i == m_highlighted_index);
         auto&& it = m_names[i];
-
-        auto line_num = text(ut_printer("%3d ", i+1).str()) | color(Color::YellowLight);
-
-        if (is_selected)
-        {
-            el.push_back(hbox({
-                line_num,
-                text(it.text_old) | color(Color::RedLight),
-            }) | notflex | focus);
-
-        }
-        else
-        {
-            el.push_back(hbox({
-                line_num,
-                text(it.text_old)
-            }) | notflex);
-        }
+        el.push_back(createOldNameElement(i+1, it, is_selected));
     }
-
 
     return el;
 }
@@ -240,6 +193,11 @@ void UserInterface::setWarn(string const& s)
 void UserInterface::setError(string const& s)
 {
     m_message = text("  " + s) | color(Color::RedLight);
+}
+
+void UserInterface::refreshOldNames()
+{
+    m_old_names = createOldNameElements();
 }
 
 void UserInterface::refreshNewNames()
@@ -261,6 +219,9 @@ void UserInterface::refreshNewNames()
 
             it.text_new = m_expression.toString(fmt_state);
         }
+
+
+        m_new_names = createNewNameElements();
     }
     catch (exception const& e)
     {
@@ -291,22 +252,54 @@ void UserInterface::changeArming()
     setWarn("Press Enter again to confirm");
 }
 
+/*
+TODO: Resizing
+
+- set initial position to just enough for old text, with a margin
+- if left split is too small to fit old text, display an error icon in split, message below
+- if right split is too small to fit new text, display an error icon in split, message below
+- read text() code, see if it's doing anything when it doesn't have enough space (feels like it does, and i want to change that behavior, elipsis or otherwise)
+
+- read frame() code, start considering fully custom renderer / component for names list
+*/
+
 int UserInterface::run(filesystem::path path)
 {
     if (!exists(path))
         return EXIT_FAILURE;
 
     auto screen = ScreenInteractive::Fullscreen();
+    auto render_time = 0_seconds;
 
     m_names.loadFilenames(path);
 
     refreshNewNames();
+    refreshOldNames();
 
-    // Initialize split sizes
-    int split_position = 50;
+    int split_position = m_names.maxExtentOld() + 6;
 
-    auto renderer_old_names = Renderer([&] { return vbox(createOldNameElements()) | left_vscroll_indicator | frame; });
-    auto renderer_new_names = Renderer([&] { return vbox(createNewNameElements()) | frame; });
+    int vlist_old_offset = 0;
+    int vlist_new_offset = 0;
+
+    auto vlist_old_names = VirtualList({
+
+        .show_scrollbar = true,
+        .show_line_numbers = true,
+        .offset = &vlist_old_offset,
+        .view_count = (int)m_names.size(),
+        .view_func = [&](int i) { return VirtualLine(m_names[i].text_old); }
+
+    });
+
+    auto vlist_new_names = VirtualList({
+
+        .show_scrollbar = false,
+        .show_line_numbers = false,
+        .offset = &vlist_new_offset,
+        .view_count = (int)m_names.size(),
+        .view_func = [&](int i) { return VirtualLine(m_names[i].text_new); }
+
+    });
 
     auto input_replace = Input(&m_str_expression, "expression", {
         .multiline = false,
@@ -314,7 +307,7 @@ int UserInterface::run(filesystem::path path)
     });
 
     // First construct the resizable split
-    auto _split = ResizableSplitLeft(renderer_old_names, renderer_new_names, &split_position);
+    auto _split = ResizableSplitLeft(vlist_old_names, vlist_new_names, &split_position);
 
     auto _component = Container::Vertical({
         _split,
@@ -348,19 +341,34 @@ int UserInterface::run(filesystem::path path)
             return true;
         }
 
+
+
         if (e == Event::ArrowUp)
         {
+            vlist_new_offset--;
+            vlist_old_offset--;
+
             if (m_highlighted_index > 0)
-                --m_highlighted_index;
+            {
+                updateHighlightedIndex(m_highlighted_index-1);
+            }
+
             if (isArming())
                 changeEditing();
             return true;
         }
 
+
+
         if (e == Event::ArrowDown)
         {
+            vlist_new_offset++;
+            vlist_old_offset++;
+
             if (m_highlighted_index < m_names.size()-1)
-                ++m_highlighted_index;
+            {
+                updateHighlightedIndex(m_highlighted_index+1);
+            }
             if (isArming())
                 changeEditing();
             return true;
@@ -388,7 +396,17 @@ int UserInterface::run(filesystem::path path)
 
     input_replace->TakeFocus();
 
-    screen.Loop(_event_catch);
+    //screen.Loop(_event_catch);
+
+    Loop loop(&screen, _event_catch);
+
+
+    while (!loop.HasQuitted())
+    {
+        auto scoped_timer = timer::scope(render_time);
+        loop.RunOnce();
+    }
+
     return EXIT_SUCCESS;
 }
 

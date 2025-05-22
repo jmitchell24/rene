@@ -64,6 +64,7 @@ jobs:
           cp -r ${{github.workspace}}/README.md ${{github.workspace}}/package/ || true
           cp -r ${{github.workspace}}/LICENSE ${{github.workspace}}/package/ || true
           cp -r ${{github.workspace}}/docs ${{github.workspace}}/package/ || true
+          cp -r ${{github.workspace}}/img ${{github.workspace}}/package/ || true
 
       - name: Create Archive
         id: create_archive

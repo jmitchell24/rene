@@ -8,6 +8,8 @@
 
 namespace ftxui
 {
+
+
     /// @brief Display a vertical scrollbar to the left.
     /// colors.
     /// @ingroup dom

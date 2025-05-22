@@ -33,12 +33,12 @@
 namespace rene::fmt
 {
     struct Var;
-    struct VarLiteral   { std::string text; };
-    struct VarOriginal  { };
-    struct VarOriginalName { };
-    struct VarOriginalExt { };
-    struct VarIndex { int offset; };
-    struct VarFuzz      { };
+    struct VarLiteral       { std::string text; };
+    struct VarOriginal      { };
+    struct VarOriginalName  { };
+    struct VarOriginalExt   { };
+    struct VarIndex         { int offset; };
+    struct VarFuzz          { };
 
     using varlist_type = std::vector<Var>;
 

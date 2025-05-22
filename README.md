@@ -9,7 +9,7 @@
 
 **A powerful, minimalist file auto-namer.**
 
-![Project Screenshot](/img/2025-05-12_screenshot.png)
+![Project Screenshot](/img//2025-05-22_screenshot.png)
 
 ## Features
 

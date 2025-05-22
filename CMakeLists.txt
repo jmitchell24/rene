@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.13)
 
 project(
     rené
-    VERSION "25.5.16"
+    VERSION "25.5.22"
     DESCRIPTION "a powerful & minimalist auto-namer."
 )
 
@@ -18,11 +18,11 @@ project(
 # test
 
 
-set(PROJECT_RELEASE "test6")
+set(PROJECT_RELEASE "test7")
 set(PROJECT_BINARY "rene")
 
-# Enable the C++17 standard
-set(CMAKE_CXX_STANDARD 17)
+# Enable the C++20 standard
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -36,7 +36,12 @@ file(GLOB_RECURSE SOURCE_FILES
         src/*.cpp
         src/*.hpp
 )
-add_executable(rene ${SOURCE_FILES})
+add_executable(rene ${SOURCE_FILES}
+        src/names.hpp
+        src/names.cpp
+        src/virtual_line_list.hpp
+        src/virtual_line_list.cpp
+)
 
 #
 # my ut library
