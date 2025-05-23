@@ -36,12 +36,8 @@ file(GLOB_RECURSE SOURCE_FILES
         src/*.cpp
         src/*.hpp
 )
-add_executable(rene ${SOURCE_FILES}
-        src/names.hpp
-        src/names.cpp
-        src/virtual_line_list.hpp
-        src/virtual_line_list.cpp
-)
+
+add_executable(rene ${SOURCE_FILES})
 
 #
 # my ut library

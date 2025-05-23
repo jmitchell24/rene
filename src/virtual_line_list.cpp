@@ -48,7 +48,7 @@ inline static int convertRange(int old_min, int old_max, int old_val, int new_mi
 // Implementation -> VirtualList
 //
 
-inline void VirtualLine::set(std::string const& s, Color c)
+void VirtualLine::set(std::string const& s, Color c)
 {
     pixels.clear();
     for (auto&& it: s)
@@ -60,7 +60,7 @@ inline void VirtualLine::set(std::string const& s, Color c)
     }
 }
 
-inline void VirtualLine::append(std::string const& s, Color c)
+void VirtualLine::append(std::string const& s, Color c)
 {
     for (auto&& it: s)
     {
@@ -71,7 +71,7 @@ inline void VirtualLine::append(std::string const& s, Color c)
     }
 }
 
-inline int VirtualLine::render(int col_max, int col_start, int row, Screen& screen)
+int VirtualLine::render(int col_max, int col_start, int row, Screen& screen) const
 {
     for (int col = col_start; col <= col_max; ++col)
     {

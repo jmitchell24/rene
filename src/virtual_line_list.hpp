@@ -34,7 +34,7 @@ namespace ftxui
         inline VirtualLine()
         {}
 
-        inline VirtualLine(std::string const& s, Color c = Color::Default)
+        inline explicit VirtualLine(std::string const& s, Color c = Color::Default)
         { set(s, c); }
 
         inline bool empty() const
@@ -48,7 +48,7 @@ namespace ftxui
 
         void set(std::string const& s, Color c = Color::Default);
         void append(std::string const& s, Color c = Color::Default);
-        int render(int col_max, int col_start, int row, Screen& screen);
+        int render(int col_max, int col_start, int row, Screen& screen) const;
         static int getVirtualLineSize(std::string const& s);
     };
 
