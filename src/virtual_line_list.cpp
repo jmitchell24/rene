@@ -22,7 +22,7 @@ using namespace std;
 #define SCROLL_CHAR_BOTTOM  ("╻")
 #define SCROLL_CHAR_EMPTY   (" ")
 
-#define LINE_NUMBER_FORMAT ("%*.d ")
+#define LINE_NUMBER_FORMAT (" {:{}} ")
 
 //
 // helper functions
@@ -249,7 +249,7 @@ int VirtualListNode::visibleLineCount() const
 VirtualLine VirtualListNode::getLineNumberLine(int lineno) const
 {
     int width = getDigitCount(m_options.view_count);
-    auto s = ut_printer(LINE_NUMBER_FORMAT, width, lineno).str();
+    auto s = format(LINE_NUMBER_FORMAT, lineno, width);
     return VirtualLine(s, Color::YellowLight);
 }
 

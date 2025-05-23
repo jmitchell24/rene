@@ -1,7 +1,7 @@
 #pragma once
 
 #define RENE_NAME         "rené"
-#define RENE_VERSION      "25.5.22"
+#define RENE_VERSION      "25.5.23"
 #define RENE_RELEASE      "test7"
 #define RENE_DESCRIPTION  "a powerful & minimalist auto-namer."
 
@@ -23,7 +23,7 @@ For more information, visit: https://github.com/jmitchell24/rene
 
     auto static const RENE_VERSION_TEXT = ut::cstrview(R"(
 
-rené, version 25.5.22
+rené, version 25.5.23
 Copyright © 2025 James Peter Mitchell
 For more information, visit: https://github.com/jmitchell24/rene
 

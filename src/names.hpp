@@ -22,10 +22,35 @@ namespace rene
     struct Name;
     using names_type = std::vector<Name>;
 
-    struct Name
+    class Name
     {
-        std::string text_old;
-        std::string text_new;
+    public:
+
+        Name()=default;
+
+        explicit Name(std::string text)
+            : m_text_old(std::move(text))
+        {}
+
+        void setTextNew(std::string text)
+        {
+            m_text_new = std::move(text);
+            m_generation++;
+        }
+
+        inline size_t generation() const
+        { return m_generation; }
+
+        inline std::string const& textNew() const
+        { return m_text_new; }
+
+        inline std::string const& textOld() const
+        { return m_text_old; }
+
+    private:
+        std::string m_text_old="";
+        std::string m_text_new="";
+        size_t      m_generation=0;
     };
 
     struct NameList

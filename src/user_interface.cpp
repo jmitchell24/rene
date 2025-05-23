@@ -72,19 +72,19 @@ void renameAllFiles(path_type path, NameList const& names)
     {
         for (auto&& it: names.names)
         {
-            renameFile(path, it.text_old, it.text_new);
+            renameFile(path, it.textOld(), it.textNew());
         }
     }
     else
     {
         for (auto&& it: names.names)
         {
-            renameFile(path, it.text_old, it.text_new + ".rene");
+            renameFile(path, it.textOld(), it.textNew() + ".rene");
         }
 
         for (auto&& it: names.names)
         {
-            renameFile(path, it.text_new + ".rene", it.text_new);
+            renameFile(path, it.textNew() + ".rene", it.textNew());
         }
     }
 }
@@ -141,11 +141,11 @@ void UserInterface::refreshNewNames()
             auto&& it = m_names[i];
 
             fmt::State fmt_state {
-                .original = it.text_old,
+                .original = it.textOld(),
                 .index = static_cast<int>(i),
             };
 
-            it.text_new = m_expression.toString(fmt_state);
+            it.setTextNew(m_expression.toString(fmt_state));
         }
 
 
@@ -215,7 +215,7 @@ int UserInterface::run(filesystem::path path)
         .show_line_numbers = true,
         .offset = &vlist_old_offset,
         .view_count = (int)m_names.size(),
-        .view_func = [&](int i) { return VirtualLine(m_names[i].text_old); }
+        .view_func = [&](int i) { return VirtualLine(m_names[i].textOld()); }
 
     });
 
@@ -225,13 +225,15 @@ int UserInterface::run(filesystem::path path)
         .show_line_numbers = false,
         .offset = &vlist_new_offset,
         .view_count = (int)m_names.size(),
-        .view_func = [&](int i) { return VirtualLine(m_names[i].text_new); }
+        .view_func = [&](int i) { return VirtualLine(m_names[i].textNew()); }
 
     });
 
     auto input_replace = Input(&m_str_expression, "expression", {
+
         .multiline = false,
         .on_change = [&]{ changeEditing(); refreshNewNames(); },
+
     });
 
     // First construct the resizable split

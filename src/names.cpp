@@ -23,9 +23,9 @@ bool NameList::isNewTextUnique() const
     unordered_set<string> tmp;
     for (auto&& it: names)
     {
-        if (tmp.find(it.text_new) != tmp.end())
+        if (tmp.find(it.textNew()) != tmp.end())
             return false;
-        tmp.insert(it.text_new);
+        tmp.insert(it.textNew());
     }
     return true;
 }
@@ -34,8 +34,8 @@ size_t NameList::maxExtentOld() const
 {
     size_t cnt=0;
     for (auto&& it: names)
-        if (cnt < it.text_old.size())
-            cnt = it.text_old.size();
+        if (cnt < it.textOld().size())
+            cnt = it.textOld().size();
     return cnt;
 }
 
@@ -44,9 +44,9 @@ bool NameList::isOldTextUnique() const
     unordered_set<string> tmp;
     for (auto&& it: names)
     {
-        if (tmp.find(it.text_old) != tmp.end())
+        if (tmp.find(it.textOld()) != tmp.end())
             return false;
-        tmp.insert(it.text_old);
+        tmp.insert(it.textOld());
     }
     return true;
 }
@@ -55,7 +55,7 @@ bool NameList::hasNewNames() const
 {
     for (auto&& it: names)
     {
-        if (it.text_new != it.text_old)
+        if (it.textNew() != it.textOld())
             return true;
     }
     return false;
@@ -67,11 +67,11 @@ pair<size_t, size_t> NameList::getExtents() const
 
     for (auto&& it: names)
     {
-        if (cnt_new < it.text_new.size())
-            cnt_new = it.text_new.size();
+        if (cnt_new < it.textNew().size())
+            cnt_new = it.textNew().size();
 
-        if (cnt_old < it.text_old.size())
-            cnt_old = it.text_old.size();
+        if (cnt_old < it.textOld().size())
+            cnt_old = it.textOld().size();
     }
 
     return { cnt_new, cnt_old };
@@ -91,7 +91,7 @@ void NameList::loadFilenames(path_type const& path)
     for (auto&& it : directory_iterator(path))
     {
         if (it.is_regular_file())
-            names.push_back({it.path().filename().string(), ""});
+            names.push_back(Name(it.path().filename().string()));
     }
 
     this->names = move(names);
