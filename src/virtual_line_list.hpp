@@ -62,7 +62,7 @@ namespace ftxui
 
         int view_count = int(100);
 
-        std::function<VirtualLine(int)> view_func = [](int i) { return VirtualLine(std::format("line {}", i)); };
+        std::function<VirtualLine(int)> view_func = [](int i) { return VirtualLine("line " + std::to_string(i)); };
     };
 
     class VirtualListNode : public Node

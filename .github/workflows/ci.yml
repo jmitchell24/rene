@@ -1,5 +1,7 @@
 # .github/workflows/ci.yml
-name: Continuous Integration
+
+# Continuous Integration
+name: CI
 
 on:
   push:
