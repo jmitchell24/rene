@@ -42,10 +42,6 @@ using namespace std;
 // NameList Implementation
 //
 
-
-
-
-
 void renameFile(path_type path, string const& old_name, string const& new_name)
 {
     using namespace std::filesystem;
@@ -92,12 +88,7 @@ void renameAllFiles(path_type path, NameList const& names)
             renameFile(path, it.text_new + ".rene", it.text_new);
         }
     }
-
-
-
 }
-
-
 
 //
 // UserInterface -> Implementation
@@ -109,18 +100,6 @@ UserInterface::UserInterface()
     setInfo("test");
 }
 
-Elements UserInterface::createNewNameElements()
-{
-    Elements el;
-    for (size_t i = 0; i < m_names.size(); ++i)
-    {
-        auto&& it = m_names[i];
-        bool is_selected = (i == m_highlighted_index);
-        el.push_back(createNewNameElement(i+1, it, is_selected));
-    }
-    return el;
-}
-
 void UserInterface::updateHighlightedIndex(size_t new_idx)
 {
     if (m_highlighted_index == new_idx)
@@ -129,57 +108,7 @@ void UserInterface::updateHighlightedIndex(size_t new_idx)
     if (new_idx >= m_names.size())
         return;
 
-    m_old_names[m_highlighted_index] = createOldNameElement(m_highlighted_index+1, m_names[m_highlighted_index], false);
-    m_new_names[m_highlighted_index] = createNewNameElement(m_highlighted_index+1, m_names[m_highlighted_index], false);
-
     m_highlighted_index = new_idx;
-
-    m_old_names[m_highlighted_index] = createOldNameElement(m_highlighted_index+1, m_names[m_highlighted_index], true);
-    m_new_names[m_highlighted_index] = createNewNameElement(m_highlighted_index+1, m_names[m_highlighted_index], true);
-}
-
-Element UserInterface::createNewNameElement(int ln, Name const& name, bool is_selected)
-{
-    if (is_selected)
-    {
-        return text(" " + name.text_new) | inverted | focus;
-    }
-    return text(" " + name.text_new);
-
-}
-
-Element UserInterface::createOldNameElement(int ln, Name const& name, bool is_selected)
-{
-    auto line_num = text(format("{} ", ln)) | color(Color::YellowLight);
-
-    if (is_selected)
-    {
-        return hbox({
-            line_num,
-            text(name.text_old) | color(Color::RedLight),
-        }) | notflex | focus;
-    }
-
-    return hbox({
-        line_num,
-        text(name.text_old)
-    }) | notflex;
-}
-
-
-
-Elements UserInterface::createOldNameElements()
-{
-    Elements el;
-
-    for (size_t i = 0; i < m_names.size(); ++i)
-    {
-        bool is_selected = (i == m_highlighted_index);
-        auto&& it = m_names[i];
-        el.push_back(createOldNameElement(i+1, it, is_selected));
-    }
-
-    return el;
 }
 
 void UserInterface::setInfo(string const& s)
@@ -197,7 +126,7 @@ void UserInterface::setError(string const& s)
 
 void UserInterface::refreshOldNames()
 {
-    m_old_names = createOldNameElements();
+
 }
 
 void UserInterface::refreshNewNames()
@@ -221,7 +150,7 @@ void UserInterface::refreshNewNames()
         }
 
 
-        m_new_names = createNewNameElements();
+        //m_new_names = createNewNameElements();
     }
     catch (exception const& e)
     {
@@ -341,8 +270,6 @@ int UserInterface::run(filesystem::path path)
             return true;
         }
 
-
-
         if (e == Event::ArrowUp)
         {
             vlist_new_offset--;
@@ -357,8 +284,6 @@ int UserInterface::run(filesystem::path path)
                 changeEditing();
             return true;
         }
-
-
 
         if (e == Event::ArrowDown)
         {
@@ -396,11 +321,7 @@ int UserInterface::run(filesystem::path path)
 
     input_replace->TakeFocus();
 
-    //screen.Loop(_event_catch);
-
     Loop loop(&screen, _event_catch);
-
-
     while (!loop.HasQuitted())
     {
         auto scoped_timer = timer::scope(render_time);
@@ -416,4 +337,3 @@ UserInterface& UserInterface::instance()
     static UserInterface x;
     return x; 
 }
-

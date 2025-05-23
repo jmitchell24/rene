@@ -37,9 +37,7 @@
 
 namespace rene
 {
-
     using path_type = std::filesystem::path;
-
 
     class UserInterface
     {
@@ -59,12 +57,8 @@ namespace rene
 
         NameList m_names;
 
-
-
         std::string m_str_expression;
         ftxui::Element m_message;
-        ftxui::Elements m_old_names;
-        ftxui::Elements m_new_names;
 
         fmt::Expression m_expression;
 
@@ -72,11 +66,6 @@ namespace rene
 
         void refreshNewNames();
         void refreshOldNames();
-
-        ftxui::Elements createOldNameElements();
-        ftxui::Elements createNewNameElements();
-        ftxui::Element createOldNameElement(int line_num, Name const& name, bool is_selected);
-        ftxui::Element createNewNameElement(int line_num, Name const& name, bool is_selected);
 
         void updateHighlightedIndex(size_t new_idx);
 

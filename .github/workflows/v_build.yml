@@ -62,7 +62,8 @@ jobs:
           cp ${{github.workspace}}/build/${{env.APP_NAME}}${{ matrix.config.binary_extension }} ${{github.workspace}}/package/
           # Copy any additional files needed for your application
           cp -r ${{github.workspace}}/README.md ${{github.workspace}}/package/ || true
-          cp -r ${{github.workspace}}/LICENSE ${{github.workspace}}/package/ || true
+          cp -r ${{github.workspace}}/CHANGELOG.md ${{github.workspace}}/package/ || true
+          cp -r ${{github.workspace}}/LICENSE.txt ${{github.workspace}}/package/ || true
           cp -r ${{github.workspace}}/docs ${{github.workspace}}/package/ || true
           cp -r ${{github.workspace}}/img ${{github.workspace}}/package/ || true
 
@@ -107,6 +108,14 @@ jobs:
       - name: List Artifacts
         run: find artifacts -type f
 
+      - name: Extract Release Notes
+        id: extract_notes
+        run: |
+          # Extract notes for current version from CHANGELOG.md
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          awk "/^## \[$VERSION\]/{flag=1; next} /^## \[/{flag=0} flag" CHANGELOG.md > current_release_notes.md
+
+
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v2
@@ -116,4 +125,5 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: false
+          body_path: current_release_notes.md
           files: artifacts/**/*
