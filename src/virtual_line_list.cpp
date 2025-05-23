@@ -6,6 +6,12 @@
 using namespace ftxui;
 
 //
+// ut
+//
+#include <ut/string.hpp>
+using namespace ut;
+
+//
 // std
 //
 #include <cmath>
@@ -16,7 +22,7 @@ using namespace std;
 #define SCROLL_CHAR_BOTTOM  ("╻")
 #define SCROLL_CHAR_EMPTY   (" ")
 
-#define LINE_NUMBER_FORMAT ("{:{}} ")
+#define LINE_NUMBER_FORMAT ("%*.d ")
 
 //
 // helper functions
@@ -243,7 +249,7 @@ int VirtualListNode::visibleLineCount() const
 VirtualLine VirtualListNode::getLineNumberLine(int lineno) const
 {
     int width = getDigitCount(m_options.view_count);
-    auto s = format(LINE_NUMBER_FORMAT, lineno, width);
+    auto s = ut_printer(LINE_NUMBER_FORMAT, width, lineno).str();
     return VirtualLine(s, Color::YellowLight);
 }
 

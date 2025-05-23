@@ -17,12 +17,10 @@
 //
 // ut
 //
-#include <ut/func.hpp>
 
 //
 // std
 //
-#include <vector>
 #include <string>
 #include <filesystem>
 

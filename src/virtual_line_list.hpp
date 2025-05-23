@@ -20,7 +20,6 @@
 
 #include <string>
 #include <vector>
-#include <format>
 #include <algorithm>
 #include <cassert>
 

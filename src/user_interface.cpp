@@ -35,7 +35,6 @@ using namespace ut;
 #include <regex>
 #include <cstdlib>
 #include <unordered_set>
-#include <format>
 using namespace std;
 
 //
