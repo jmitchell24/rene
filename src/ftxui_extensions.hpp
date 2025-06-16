@@ -13,7 +13,7 @@ namespace ftxui
     /// @brief Display a vertical scrollbar to the left.
     /// colors.
     /// @ingroup dom
-    Element left_vscroll_indicator(Element child)
+    inline static Element left_vscroll_indicator(Element child)
     {
         class Impl : public Node {
         public:

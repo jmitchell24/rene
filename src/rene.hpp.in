@@ -9,11 +9,12 @@ namespace rene
 {
     auto static const RENE_HELP_TEXT = ut::cstrview(R"(
 
-usage: rene <directory>
+usage: rene <directory|input file>
 
 @PROJECT_NAME@, @PROJECT_DESCRIPTION@
 
 Options:
+    -s, --sed        Stream Editor Mode.
     -h, --help       Display this help message and exit.
     -v, --version    Show version information and exit.
 

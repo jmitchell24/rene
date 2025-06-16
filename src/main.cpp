@@ -7,6 +7,7 @@
 #include "cmd.hpp"
 #include "rene.hpp"
 #include "user_interface.hpp"
+#include "user_interface_sed.hpp"
 using namespace rene;
 
 //
@@ -43,8 +44,24 @@ int main(int argc, char** argv)
         return EXIT_SUCCESS;
     }
 
-    if (string path; args.tryGetPositional(0, path))
+    if (args.flagSedMode())
     {
+
+        NameList nl;
+        nl.loadDummies(100);
+        return UserInterfaceSed::instance().run(nl);
+    }
+
+    if (string arg; args.tryGetPositional(0, arg))
+    {
+        auto path = path_type(arg);
+
+        if (!filesystem::exists(path))
+        {
+            cout << path << ": " TERM_FG_BRIGHT_RED "No such directory" TERM_RESET "\n";
+            return EXIT_FAILURE;
+        }
+
         return UserInterface::instance().run(path);
     }
 

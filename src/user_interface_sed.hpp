@@ -1,18 +1,21 @@
 //
-// Created by james on 02/05/25.
+// Created by james on 13/06/25.
 //
+
 #pragma once
+
 
 //
 // rene
 //
+
 #include "fmt.hpp"
 #include "names.hpp"
-#include "user_interface_state.hpp"
 
 //
 // ftxui
 //
+
 #include "ftxui/dom/elements.hpp"
 
 //
@@ -22,16 +25,11 @@
 //
 // std
 //
-#include <string>
-#include <filesystem>
-
-
 
 namespace rene
 {
-    using path_type = std::filesystem::path;
 
-    class UserInterface
+    class UserInterfaceSed
     {
     public:
         enum State { EDITING, ARMING };
@@ -39,8 +37,8 @@ namespace rene
 
         using path_type = std::filesystem::path;
 
-        int run(path_type path);
-        static UserInterface& instance();
+        int run(NameList const& names);
+        static UserInterfaceSed& instance();
 
     private:
         State m_state = EDITING;
@@ -49,13 +47,16 @@ namespace rene
 
         NameList m_names;
 
+        std::string m_str_match;
         std::string m_str_expression;
 
         ftxui::Element m_message;
 
+
+        std::regex m_regex;
         fmt::Expression m_expression;
 
-        UserInterface();
+        UserInterfaceSed();
 
         void refreshNewNames();
         void refreshOldNames();
@@ -74,5 +75,7 @@ namespace rene
         void setInfo(std::string const& s);
         void setWarn(std::string const& s);
         void setError(std::string const& s);
+
+        
     };
 }

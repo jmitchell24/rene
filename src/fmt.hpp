@@ -23,6 +23,7 @@
     _var(OriginalName, ORIGINAL_NAME) \
     _var(OriginalExt, ORIGINAL_EXT) \
     _var(Index, INDEX) \
+    _var(Match, MATCH) \
     _var(Fuzz, FUZZ)
 
 #define VAR_ENUM(_x, _y) ,_y
@@ -38,6 +39,7 @@ namespace rene::fmt
     struct VarOriginalName  { };
     struct VarOriginalExt   { };
     struct VarIndex         { int offset; };
+    struct VarMatch         { int index; };
     struct VarFuzz          { };
 
     using varlist_type = std::vector<Var>;
@@ -54,7 +56,9 @@ namespace rene::fmt
 
     struct State
     {
+
         std::string original;
+        std::vector<std::string> matches;
         int index;
 
         inline std::string originalExt() const

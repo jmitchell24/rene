@@ -1,11 +1,15 @@
 //
-// Created by james on 02/05/25.
+// Created by james on 13/06/25.
 //
+
+
+
+
 
 //
 // rene
 //
-#include "user_interface.hpp"
+#include "user_interface_sed.hpp"
 #include "fmt.hpp"
 #include "rene.hpp"
 #include "ut/time.hpp"
@@ -37,69 +41,19 @@ using namespace ut;
 #include <unordered_set>
 using namespace std;
 
-//
-// NameList Implementation
-//
 
-void renameFile(path_type path, string const& old_name, string const& new_name)
-{
-    using namespace std::filesystem;
-
-    if (!exists(path))
-        return;
-
-    if (!is_directory(path))
-        return;
-
-    auto old_path = path / old_name;
-    auto new_path = path / new_name;
-
-    if (!exists(old_path))
-        return;
-
-    check(!exists(new_path));
-    rename(old_path, new_path);
-}
-
-void renameAllFiles(path_type path, NameList const& names)
-{
-    using namespace std::filesystem;
-
-    if (!exists(path))
-        return;
-
-    if (false)
-    {
-        for (auto&& it: names.names)
-        {
-            renameFile(path, it.textOld(), it.textNew());
-        }
-    }
-    else
-    {
-        for (auto&& it: names.names)
-        {
-            renameFile(path, it.textOld(), it.textNew() + ".rene");
-        }
-
-        for (auto&& it: names.names)
-        {
-            renameFile(path, it.textNew() + ".rene", it.textNew());
-        }
-    }
-}
 
 //
 // UserInterface -> Implementation
 //
 
 
-UserInterface::UserInterface()
+UserInterfaceSed::UserInterfaceSed()
 {
     setInfo("test");
 }
 
-void UserInterface::updateHighlightedIndex(size_t new_idx)
+void UserInterfaceSed::updateHighlightedIndex(size_t new_idx)
 {
     if (m_highlighted_index == new_idx)
         return;
@@ -110,25 +64,25 @@ void UserInterface::updateHighlightedIndex(size_t new_idx)
     m_highlighted_index = new_idx;
 }
 
-void UserInterface::setInfo(string const& s)
+void UserInterfaceSed::setInfo(string const& s)
 {
     m_message = text("  " + s) | color(Color::GreenLight);
 }
-void UserInterface::setWarn(string const& s)
+void UserInterfaceSed::setWarn(string const& s)
 {
     m_message = text("  " + s) | color(Color::YellowLight);
 }
-void UserInterface::setError(string const& s)
+void UserInterfaceSed::setError(string const& s)
 {
     m_message = text("  " + s) | color(Color::RedLight);
 }
 
-void UserInterface::refreshOldNames()
+void UserInterfaceSed::refreshOldNames()
 {
 
 }
 
-void UserInterface::refreshNewNames()
+void UserInterfaceSed::refreshNewNames()
 {
     setInfo("Press Return to rename");
 
@@ -142,7 +96,7 @@ void UserInterface::refreshNewNames()
 
             fmt::State fmt_state {
                 .original = it.textOld(),
-                .matches = { },
+                .matches = { "asdf" },
                 .index = static_cast<int>(i),
             };
 
@@ -169,13 +123,13 @@ void UserInterface::refreshNewNames()
     }
 }
 
-void UserInterface::changeEditing()
+void UserInterfaceSed::changeEditing()
 {
     m_state = EDITING;
     setInfo("Press Enter to rename");
 }
 
-void UserInterface::changeArming()
+void UserInterfaceSed::changeArming()
 {
     m_state = ARMING;
     setWarn("Press Enter again to confirm");
@@ -192,15 +146,48 @@ TODO: Resizing
 - read frame() code, start considering fully custom renderer / component for names list
 */
 
-int UserInterface::run(filesystem::path path)
+VirtualLine getVirtualLineOld(Name const& n, regex const& r)
 {
-    if (!exists(path))
-        return EXIT_FAILURE;
+    static vector<Color::Palette16> colors = {
+        Color::RedLight,
+        Color::GreenLight,
+        Color::YellowLight,
+        Color::BlueLight,
+        Color::MagentaLight,
+        Color::CyanLight
+    };
+
+    VirtualLine vl;
+
+    size_t col=0;
+
+    for (auto&& it: n.getSubsOld(r))
+    {
+        for (auto&& jt: strview(n.textOld(), {it.begin, it.end}))
+        {
+            Pixel p;
+            p.character = jt;
+
+            p.inverted = it.highlight;
+            if (it.highlight)
+                p.foreground_color = Color(colors[col]);
+            vl.pixels.push_back(p);
+        }
+
+        col = (col + 1) % colors.size();
+    }
+
+    return vl;
+}
+
+int UserInterfaceSed::run(NameList const& name_list)
+{
+
 
     auto screen = ScreenInteractive::Fullscreen();
     auto render_time = 0_seconds;
 
-    m_names.loadFilenames(path);
+    m_names = name_list;
 
     refreshNewNames();
     refreshOldNames();
@@ -216,7 +203,7 @@ int UserInterface::run(filesystem::path path)
         .show_line_numbers = true,
         .offset = &vlist_old_offset,
         .view_count = (int)m_names.size(),
-        .view_func = [&](int i) { return VirtualLine(m_names[i].textOld()); }
+        .view_func = [&](int i) { return getVirtualLineOld(m_names[i], m_regex); }
 
     });
 
@@ -230,7 +217,15 @@ int UserInterface::run(filesystem::path path)
 
     });
 
-    //auto input_match = Input(&)
+    auto input_match = Input(&m_str_match, "match", {
+
+        .multiline = false,
+        .on_change = [&]
+        {
+            try { m_regex = regex(m_str_match); } catch (...) {}
+        }
+
+    });
 
     auto input_replace = Input(&m_str_expression, "expression", {
 
@@ -239,11 +234,14 @@ int UserInterface::run(filesystem::path path)
 
     });
 
+
+
     // First construct the resizable split
     auto _split = ResizableSplitLeft(vlist_old_names, vlist_new_names, &split_position);
 
     auto _component = Container::Vertical({
         _split,
+        input_match,
         input_replace
     });
 
@@ -253,14 +251,21 @@ int UserInterface::run(filesystem::path path)
             _split->Render() | flex,
             vbox({
                 hbox({
+                    text("> ") | ( input_match->Focused() ? color(Color::Green) | bold : dim ),
+                    input_match->Render()
+                }),
+
+                hbox({
                     text("> ") | ( input_replace->Focused() ? color(Color::Green) | bold : dim ),
                     input_replace->Render()
                 }),
+
                 m_message,
+
                 hbox({
                     text(RENE_NAME " " RENE_VERSION) | dim,
                     separatorEmpty(),
-                    text("path: " + path.string()) | dim
+                    text("path: " ) | dim
                 })
             }) | border
         }) | flex;
@@ -312,9 +317,8 @@ int UserInterface::run(filesystem::path path)
             else if (isArming())
             {
                 changeEditing();
-                renameAllFiles(path, m_names);
-
-                m_names.loadFilenames(path);
+                //renameAllFiles(path, m_names);
+                //m_names.loadFilenames(path);
                 refreshNewNames();
             }
             return true;
@@ -323,7 +327,7 @@ int UserInterface::run(filesystem::path path)
         return false;
     });
 
-    input_replace->TakeFocus();
+    input_match->TakeFocus();
 
     Loop loop(&screen, _event_catch);
     while (!loop.HasQuitted())
@@ -336,8 +340,8 @@ int UserInterface::run(filesystem::path path)
 }
 
 
-UserInterface& UserInterface::instance()
+UserInterfaceSed& UserInterfaceSed::instance()
 {
-    static UserInterface x;
-    return x; 
+    static UserInterfaceSed x;
+    return x;
 }

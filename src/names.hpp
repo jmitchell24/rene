@@ -5,8 +5,13 @@
 #pragma once
 
 //
+//
+//
+
+//
 // ut
 //
+#include <ut/string.hpp>
 #include <ut/check.hpp>
 
 //
@@ -15,6 +20,7 @@
 
 #include <string>
 #include <vector>
+#include <regex>
 #include <filesystem>
 
 namespace rene
@@ -25,18 +31,16 @@ namespace rene
     class Name
     {
     public:
+        struct sub { size_t begin, end; bool highlight; };
+        using sublist_type = std::vector<sub>;
 
         Name()=default;
 
-        explicit Name(std::string text)
-            : m_text_old(std::move(text))
-        {}
+        explicit Name(ut::strparam text);
 
-        void setTextNew(std::string text)
-        {
-            m_text_new = std::move(text);
-            m_generation++;
-        }
+        void setTextNew(ut::strparam text);
+
+        sublist_type getSubsOld(std::regex const& r) const;
 
         inline size_t generation() const
         { return m_generation; }
@@ -50,7 +54,8 @@ namespace rene
     private:
         std::string m_text_old="";
         std::string m_text_new="";
-        size_t      m_generation=0;
+
+        size_t m_generation=0;
     };
 
     struct NameList
@@ -84,6 +89,8 @@ namespace rene
         { return names[i]; }
 
         void loadFilenames(path_type const& path);
+        void loadDummies(size_t count);
+        void loadNewNames(std::vector<std::string> const& new_names);
     };
 
 

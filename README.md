@@ -76,17 +76,21 @@ rene --version
 
 ### Name Templating Examples
 
-| Template           | Description                                              |
-|--------------------|----------------------------------------------------------|
-| `[]`               | print complete original file name                        |
-| `[name]`           | print original file name WITHOUT extension               |
-| `[ext]`            | print extension of original file name                    |
-| `[index <offset>]` | print index of current file name with offset (default 0) | 
-| `[fuzz]`           | print a random word _(for debug purposes only)_          |
+| Template           | Description                                                 |
+|--------------------|-------------------------------------------------------------|
+| `[]`               | print complete original file name                           |
+| `[name]`           | print original file name WITHOUT extension                  |
+| `[ext]`            | print extension of original file name                       |
+| `[index <offset>]` | print index of current file name with offset (default 0)    | 
+| `[match <index>]`  | print match of index in 'find and replace' mode (default 0) |
+| `[fuzz]`           | print a random word _(for debug purposes only)_             |
+
+
 
 ## Roadmap
 
 - [x] Initial release with core functionality (MVP)
+- [ ] 'find and replace mode', similar to the unix program 'sed'
 - [ ] Expansion of command-line and terminal-based features 
 - [ ] Desktop GUI
 

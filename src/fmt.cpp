@@ -49,6 +49,24 @@ VarIndex varIndex(arglist_type const& args)
     return { };
 }
 
+VarMatch varMatch(arglist_type const& args)
+{
+    if (args.size() == 1)
+    {
+        return VarMatch{ .index = 0 };
+    }
+
+    if (args.size() == 0)
+    {
+        int index;
+        auto&& a = args[1];
+        from_chars(a.data(), a.data()+a.size(), index);
+        return VarMatch{ .index=index };
+    }
+    throw runtime_error("invalid args for index");
+    return { };
+}
+
 Var fieldToVar(TextField const& tf)
 {
     if (tf.isText())
@@ -67,6 +85,9 @@ Var fieldToVar(TextField const& tf)
 
     if (args[0] == "index")
         return { varIndex(args) };
+
+    if (args[0] == "match")
+        return { varMatch(args) };
 
     if (args[0] == "fuzz")
         return { VarFuzz{} };
@@ -121,6 +142,13 @@ string Expression::toString(State const& state) const
             case Var::ORIGINAL_NAME: oss << state.originalName(); break;
             case Var::INDEX: oss << to_string(state.index + it.asIndex().offset); break;
             case Var::FUZZ: oss << getRandomFakeWord(state.index); break;
+
+
+        case Var::MATCH:
+            if (size_t i = it.asMatch().index; i < state.matches.size())
+                oss << state.matches[i];
+            break;
+
             default:nopath_case(Var::Kind);
         }
     }

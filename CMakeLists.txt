@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.13)
 
 project(
     rené
-    VERSION "25.5.23"
+    VERSION "25.6.16"
     DESCRIPTION "a powerful & minimalist auto-namer."
 )
 
@@ -18,7 +18,7 @@ project(
 # test
 
 
-set(PROJECT_RELEASE "test7")
+set(PROJECT_RELEASE "pre-release 2")
 set(PROJECT_BINARY "rene")
 
 # Enable the C++20 standard

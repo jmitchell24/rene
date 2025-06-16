@@ -35,6 +35,7 @@ namespace rene
 
         inline bool flagHelp() const { return anyFlag("help", "h"); }
         inline bool flagVersion() const { return anyFlag("version", "v"); }
+        inline bool flagSedMode() const { return anyFlag("sed", "s"); }
 
         std::string const& programName() const;
         bool flag(std::string const& s) const;
