@@ -5,6 +5,11 @@
 #pragma once
 
 //
+// rene
+//
+#include "em.hpp"
+
+//
 // std
 //
 #include <string>
@@ -54,19 +59,28 @@ namespace rene::fmt
         var_type data;
     };
 
+    using matchlist_type = std::vector<ut::strview::indices>;
+
     struct State
     {
 
+        /// \brief unmodified input text
         std::string original;
-        std::vector<std::string> matches;
+
+        /// \brief matched substrings of input text (if any)
+        matchlist_type matches;
+
+        /// \brief index value of the input text
         int index;
 
+        /// \brief input text after final '.' char (if any)
         inline std::string originalExt() const
         {
             auto splits = ut::strview(original).split(".");
             return splits.empty() ? "" : splits.back().str();
         }
 
+        /// \brief input text before final '.' char (if any)
         inline std::string originalName() const
         {
             auto sv = ut::strview(original);
@@ -78,10 +92,11 @@ namespace rene::fmt
     class Expression
     {
     public:
+        struct Result { std::string text; emlist_type emlist; };
         Expression()=default;
-        Expression(std::string const& expr);
+        Expression(ut::strparam s);
 
-        std::string toString(State const& state) const;
+        Result getResult(State const& state) const;
 
         inline bool empty() const
         { return m_vars.empty(); }

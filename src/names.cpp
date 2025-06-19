@@ -49,14 +49,14 @@ Name::sublist_type Name::getSubsOld(regex const& r) const
         size_t iend = ibeg + it->length();
 
         if (ibeg > last)
-            subs.push_back({last, ibeg, false});
-        subs.push_back({ibeg, iend, true});
+            subs.push_back({last, ibeg, EM_NONE});
+        subs.push_back({ibeg, iend, EM_MATCH});
 
         last = iend;
     }
 
     if (size_t end = m_text_old.size(); last < end)
-        subs.push_back({last, end, false});
+        subs.push_back({last, end, EM_NONE});
 
     return subs;
 }

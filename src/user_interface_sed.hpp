@@ -53,12 +53,12 @@ namespace rene
         ftxui::Element m_message;
 
 
-        std::regex m_regex;
-        fmt::Expression m_expression;
+        //std::regex m_regex;
+        //fmt::Expression m_expression;
 
         UserInterfaceSed();
 
-        void refreshNewNames();
+        void refreshNewNames(fmt::Expression& expr);
         void refreshOldNames();
 
         void updateHighlightedIndex(size_t new_idx);

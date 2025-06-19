@@ -10,6 +10,8 @@
 // rene
 //
 #include "user_interface_sed.hpp"
+
+#include "find_replace.hpp"
 #include "fmt.hpp"
 #include "rene.hpp"
 #include "ut/time.hpp"
@@ -41,7 +43,36 @@ using namespace ut;
 #include <unordered_set>
 using namespace std;
 
+VirtualLine getVirtualLine(strparam s, emlist_type emlist)
+{
+    VirtualLine vl;
+    for (auto& it: emlist)
+    {
+        for (auto&& jt: s.withIndices(it.begin, it.end))
+        {
+            Pixel p;
+            p.character = jt;
+            p.inverted = it.kind == Em::MATCH;
 
+            switch (it.kind)
+            {
+                case Em::MATCH:
+                    p.foreground_color = Color(Color::LightCoral);
+                    break;
+
+                case Em::VAR:
+                    p.foreground_color = Color(Color::LightGreen);
+                    break;
+
+                default:
+                    break;
+            }
+
+            vl.pixels.push_back(p);
+        }
+    }
+    return vl;
+}
 
 //
 // UserInterface -> Implementation
@@ -82,13 +113,13 @@ void UserInterfaceSed::refreshOldNames()
 
 }
 
-void UserInterfaceSed::refreshNewNames()
+void UserInterfaceSed::refreshNewNames(fmt::Expression& expr)
 {
     setInfo("Press Return to rename");
 
     try
     {
-        m_expression = fmt::Expression(m_str_expression);
+        expr = fmt::Expression(m_str_expression);
 
         for (size_t i = 0; i < m_names.size(); ++i)
         {
@@ -96,11 +127,10 @@ void UserInterfaceSed::refreshNewNames()
 
             fmt::State fmt_state {
                 .original = it.textOld(),
-                .matches = { "asdf" },
                 .index = static_cast<int>(i),
             };
 
-            it.setTextNew(m_expression.toString(fmt_state));
+            it.setTextNew(expr.getResult(fmt_state).text);
         }
 
 
@@ -146,39 +176,40 @@ TODO: Resizing
 - read frame() code, start considering fully custom renderer / component for names list
 */
 
-VirtualLine getVirtualLineOld(Name const& n, regex const& r)
-{
-    static vector<Color::Palette16> colors = {
-        Color::RedLight,
-        Color::GreenLight,
-        Color::YellowLight,
-        Color::BlueLight,
-        Color::MagentaLight,
-        Color::CyanLight
-    };
-
-    VirtualLine vl;
-
-    size_t col=0;
-
-    for (auto&& it: n.getSubsOld(r))
-    {
-        for (auto&& jt: strview(n.textOld(), {it.begin, it.end}))
-        {
-            Pixel p;
-            p.character = jt;
-
-            p.inverted = it.highlight;
-            if (it.highlight)
-                p.foreground_color = Color(colors[col]);
-            vl.pixels.push_back(p);
-        }
-
-        col = (col + 1) % colors.size();
-    }
-
-    return vl;
-}
+// VirtualLine getVirtualLineOld(Name const& n, regex const& r)
+// {
+//     static vector<Color::Palette16> colors = {
+//         Color::RedLight,
+//         Color::GreenLight,
+//         Color::YellowLight,
+//         Color::BlueLight,
+//         Color::MagentaLight,
+//         Color::CyanLight
+//     };
+//
+//     VirtualLine vl;
+//
+//     size_t col=0;
+//
+//     for (auto&& it: n.getSubsOld(r))
+//     {
+//         for (auto&& jt: strview(n.textOld(), {it.begin, it.end}))
+//         {
+//             Pixel p;
+//             p.character = jt;
+//
+//             p.inverted = it.type == Name::EM_MATCH;
+//             if (it.type == Name::EM_MATCH)
+//                 p.foreground_color = Color(colors[col]);
+//             vl.pixels.push_back(p);
+//         }
+//
+//         if (it.type == Name::EM_MATCH)
+//             col = (col + 1) % colors.size();
+//     }
+//
+//     return vl;
+// }
 
 int UserInterfaceSed::run(NameList const& name_list)
 {
@@ -187,9 +218,11 @@ int UserInterfaceSed::run(NameList const& name_list)
     auto screen = ScreenInteractive::Fullscreen();
     auto render_time = 0_seconds;
 
+    FindReplace find_replace;
+
     m_names = name_list;
 
-    refreshNewNames();
+    refreshNewNames(find_replace.m_replace);
     refreshOldNames();
 
     int split_position = m_names.maxExtentOld() + 6;
@@ -203,7 +236,12 @@ int UserInterfaceSed::run(NameList const& name_list)
         .show_line_numbers = true,
         .offset = &vlist_old_offset,
         .view_count = (int)m_names.size(),
-        .view_func = [&](int i) { return getVirtualLineOld(m_names[i], m_regex); }
+        .view_func = [&](int i)
+        {
+            auto s = strview(m_names[i].textOld());
+            auto r = find_replace.getFindResult(s);
+            return getVirtualLine(s, r.emlist);
+        }
 
     });
 
@@ -213,24 +251,34 @@ int UserInterfaceSed::run(NameList const& name_list)
         .show_line_numbers = false,
         .offset = &vlist_new_offset,
         .view_count = (int)m_names.size(),
-        .view_func = [&](int i) { return VirtualLine(m_names[i].textNew()); }
-
-    });
-
-    auto input_match = Input(&m_str_match, "match", {
-
-        .multiline = false,
-        .on_change = [&]
+        .view_func = [&](int i)
         {
-            try { m_regex = regex(m_str_match); } catch (...) {}
+            auto res = find_replace.getReplaceResult(m_names[i].textOld());
+            auto vl = getVirtualLine(res.replace_text, res.replace_emlist);
+            return vl;
         }
 
     });
 
-    auto input_replace = Input(&m_str_expression, "expression", {
+    auto input_match = Input(&m_str_match, "find", {
 
         .multiline = false,
-        .on_change = [&]{ changeEditing(); refreshNewNames(); },
+        .on_change = [&]
+        {
+            //try { m_regex = regex(m_str_match); } catch (...) {}
+            find_replace.setFind(m_str_match);
+        }
+
+    });
+
+    auto input_replace = Input(&m_str_expression, "replace", {
+
+        .multiline = false,
+        .on_change = [&]
+        {
+            find_replace.setReplace(m_str_expression);
+            changeEditing(); refreshNewNames(find_replace.m_replace);
+        },
 
     });
 
@@ -251,12 +299,12 @@ int UserInterfaceSed::run(NameList const& name_list)
             _split->Render() | flex,
             vbox({
                 hbox({
-                    text("> ") | ( input_match->Focused() ? color(Color::Green) | bold : dim ),
+                    text("• ") | ( input_match->Focused() ? color(Color::Green) | bold : dim ),
                     input_match->Render()
                 }),
 
                 hbox({
-                    text("> ") | ( input_replace->Focused() ? color(Color::Green) | bold : dim ),
+                    text("• ") | ( input_replace->Focused() ? color(Color::Green) | bold : dim ),
                     input_replace->Render()
                 }),
 
@@ -319,7 +367,7 @@ int UserInterfaceSed::run(NameList const& name_list)
                 changeEditing();
                 //renameAllFiles(path, m_names);
                 //m_names.loadFilenames(path);
-                refreshNewNames();
+                refreshNewNames(find_replace.m_replace);
             }
             return true;
         }

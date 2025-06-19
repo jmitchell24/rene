@@ -100,9 +100,9 @@ Var fieldToVar(TextField const& tf)
 // Replacer -> Implementation
 //
 
-Expression::Expression(string const& expr)
+Expression::Expression(strparam s)
 {
-    auto fields = parseFields(expr);
+    auto fields = parseFields(s.str());
     for (auto&& it: fields)
         m_vars.push_back(fieldToVar(it));
 }
@@ -127,31 +127,45 @@ std::string getRandomFakeWord(int i)
     return random_words[(off + i) % random_words.size()];
 }
 
-string Expression::toString(State const& state) const
+Expression::Result Expression::getResult(State const& state) const
 {
-    ostringstream oss;
+    Result res;
+
+#define APPEND(_s, _em) { \
+    string s = _s; \
+    res.text += s; \
+    res.emlist.push_back({_em, res.text.size() - s.size(), res.text.size()}); \
+    }
 
     for (auto&& it: m_vars)
     {
         switch (it.kind())
         {
             case Var::EMPTY: break;
-            case Var::LITERAL: oss << it.asLiteral().text; break;
-            case Var::ORIGINAL: oss << state.original; break;
-            case Var::ORIGINAL_EXT: oss << state.originalExt(); break;
-            case Var::ORIGINAL_NAME: oss << state.originalName(); break;
-            case Var::INDEX: oss << to_string(state.index + it.asIndex().offset); break;
-            case Var::FUZZ: oss << getRandomFakeWord(state.index); break;
+            case Var::LITERAL: APPEND(it.asLiteral().text, Em::NONE); break;
+            case Var::ORIGINAL: APPEND(state.original, Em::VAR); break;
+            case Var::ORIGINAL_EXT: APPEND(state.originalExt(), Em::NONE); break;
+            case Var::ORIGINAL_NAME: APPEND(state.originalName(), Em::NONE); break;
+            case Var::INDEX: APPEND(to_string(state.index + it.asIndex().offset), Em::NONE); break;
+            case Var::FUZZ: APPEND(getRandomFakeWord(state.index), Em::NONE); break;
 
 
         case Var::MATCH:
             if (size_t i = it.asMatch().index; i < state.matches.size())
-                oss << state.matches[i];
+            {
+                APPEND(state.matches[i].view(state.original).str(), Em::NONE);
+            }
+            else
+            {
+                APPEND("???", Em::NONE);
+            }
             break;
 
             default:nopath_case(Var::Kind);
         }
     }
 
-    return oss.str();
+#undef APPEND
+
+    return res;
 }

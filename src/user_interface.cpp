@@ -146,7 +146,7 @@ void UserInterface::refreshNewNames()
                 .index = static_cast<int>(i),
             };
 
-            it.setTextNew(m_expression.toString(fmt_state));
+            it.setTextNew(m_expression.getResult(fmt_state).text);
         }
 
 

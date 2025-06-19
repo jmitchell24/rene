@@ -5,8 +5,9 @@
 #pragma once
 
 //
+// rene
 //
-//
+#include "fmt.hpp"
 
 //
 // ut
@@ -28,11 +29,60 @@ namespace rene
     struct Name;
     using names_type = std::vector<Name>;
 
+    /// \brief original name, immutable
+    class OldName
+    {
+    public:
+        /// \brief Emphasis Type
+        enum EmType { SUB, MATCH, EXT };
+
+        /// \brief section of text to emphasize
+        struct Em { size_t begin=0, end=0; EmType type=SUB; };
+
+        using emlist_type = std::vector<Em>;
+
+        OldName(ut::strparam text)
+            : m_text{text.str()}
+        { }
+
+        emlist_type getEmList() const;
+
+    private:
+        std::string m_text;
+    };
+
+    /// \brief modified name, mutable (built in place)
+    class NewName
+    {
+    public:
+        /// \brief Emphasis Type
+        enum SubType { SUB, MATCH, VAR };
+
+        /// \brief section of text to emphasize
+        struct Sub { size_t begin=0, end=0; SubType type=SUB; };
+
+
+        using sublist_type = std::vector<Sub>;
+
+        NewName() {}
+
+
+
+        void append(ut::strparam text, SubType);
+
+    private:
+        std::string m_text;
+        sublist_type m_sublist;
+    };
+
+
+
     class Name
     {
     public:
-        struct sub { size_t begin, end; bool highlight; };
-        using sublist_type = std::vector<sub>;
+        enum EmType { EM_NONE, EM_MATCH, EM_EXT, EM_VAR };
+        struct Sub { size_t begin, end; EmType type=EM_NONE; };
+        using sublist_type = std::vector<Sub>;
 
         Name()=default;
 
@@ -50,6 +100,8 @@ namespace rene
 
         inline std::string const& textOld() const
         { return m_text_old; }
+
+        std::string getNewName(fmt::Expression const& expression) const;
 
     private:
         std::string m_text_old="";
