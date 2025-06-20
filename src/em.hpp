@@ -14,7 +14,7 @@ namespace rene
     /// \brief Emphasis of a sub-string (highlighting)
     struct Em
     {
-        enum Kind { NONE, MATCH, VAR, EXT, NUM } kind=NONE;
+        enum Kind { NONE, MATCH, VAR } kind=NONE;
         size_t begin=0, end=0;
     };
 

@@ -43,32 +43,34 @@ using namespace ut;
 #include <unordered_set>
 using namespace std;
 
-VirtualLine getVirtualLine(strparam s, emlist_type emlist)
+VirtualLine getVirtualLine(strparam s, emlist_type const& emlist, Pixel p_em = {}, Pixel p_none = {})
 {
     VirtualLine vl;
     for (auto& it: emlist)
     {
         for (auto&& jt: s.withIndices(it.begin, it.end))
         {
-            Pixel p;
-            p.character = jt;
-            p.inverted = it.kind == Em::MATCH;
-
             switch (it.kind)
             {
+                case Em::NONE:
+                    p_none.character = jt;
+                    vl.pixels.push_back(p_none);
+                    break;
+
                 case Em::MATCH:
-                    p.foreground_color = Color(Color::LightCoral);
+                    p_em.character = jt;
+                    p_em.foreground_color = Color(Color::LightCoral);
+                    vl.pixels.push_back(p_em);
                     break;
 
                 case Em::VAR:
-                    p.foreground_color = Color(Color::LightGreen);
+                    p_em.character = jt;
+                    p_em.foreground_color = Color(Color::LightGreen);
+                    vl.pixels.push_back(p_em);
                     break;
 
-                default:
-                    break;
+                default:nopath_case(Em::Kind);
             }
-
-            vl.pixels.push_back(p);
         }
     }
     return vl;
@@ -240,7 +242,10 @@ int UserInterfaceSed::run(NameList const& name_list)
         {
             auto s = strview(m_names[i].textOld());
             auto r = find_replace.getFindResult(s);
-            return getVirtualLine(s, r.emlist);
+            auto p = Pixel();
+            p.inverted = true;
+
+            return getVirtualLine(s, r.emlist, p);
         }
 
     });
@@ -254,7 +259,9 @@ int UserInterfaceSed::run(NameList const& name_list)
         .view_func = [&](int i)
         {
             auto res = find_replace.getReplaceResult(m_names[i].textOld());
-            auto vl = getVirtualLine(res.replace_text, res.replace_emlist);
+            auto p = Pixel();
+
+            auto vl = getVirtualLine(res.replace_text, res.replace_emlist, p);
             return vl;
         }
 

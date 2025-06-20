@@ -143,21 +143,17 @@ Expression::Result Expression::getResult(State const& state) const
         {
             case Var::EMPTY: break;
             case Var::LITERAL: APPEND(it.asLiteral().text, Em::NONE); break;
-            case Var::ORIGINAL: APPEND(state.original, Em::VAR); break;
-            case Var::ORIGINAL_EXT: APPEND(state.originalExt(), Em::NONE); break;
-            case Var::ORIGINAL_NAME: APPEND(state.originalName(), Em::NONE); break;
-            case Var::INDEX: APPEND(to_string(state.index + it.asIndex().offset), Em::NONE); break;
-            case Var::FUZZ: APPEND(getRandomFakeWord(state.index), Em::NONE); break;
+            case Var::ORIGINAL: APPEND(state.original, Em::MATCH); break;
+            case Var::ORIGINAL_EXT: APPEND(state.originalExt(), Em::VAR); break;
+            case Var::ORIGINAL_NAME: APPEND(state.originalName(), Em::VAR); break;
+            case Var::INDEX: APPEND(to_string(state.index + it.asIndex().offset), Em::VAR); break;
+            case Var::FUZZ: APPEND(getRandomFakeWord(state.index), Em::VAR); break;
 
 
         case Var::MATCH:
             if (size_t i = it.asMatch().index; i < state.matches.size())
             {
-                APPEND(state.matches[i].view(state.original).str(), Em::NONE);
-            }
-            else
-            {
-                APPEND("???", Em::NONE);
+                APPEND(state.matches[i].view(state.original).str(), Em::MATCH);
             }
             break;
 

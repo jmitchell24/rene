@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.13)
 
 project(
     rené
-    VERSION "25.6.19"
+    VERSION "25.6.20"
     DESCRIPTION "a powerful & minimalist auto-namer."
 )
 

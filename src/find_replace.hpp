@@ -24,10 +24,6 @@
 
 namespace rene
 {
-
-
-
-
     class FindReplace
     {
     public:
