@@ -27,6 +27,13 @@ namespace rene
     class FindReplace
     {
     public:
+        /// \brief vars required by getResult
+        struct State
+        {
+            int index;
+            int total;
+        };
+
         struct ReplaceResult
         {
             std::string replace_text;
@@ -40,7 +47,7 @@ namespace rene
         };
 
         FindResult getFindResult(ut::strparam s) const;
-        ReplaceResult getReplaceResult(ut::strparam s) const;
+        ReplaceResult getReplaceResult(ut::strparam s, State const& state) const;
 
         void setFind(ut::strparam s);
         void setReplace(ut::strparam s);

@@ -48,7 +48,7 @@ inline static int convertRange(int old_min, int old_max, int old_val, int new_mi
 // Implementation -> VirtualList
 //
 
-void VirtualLine::set(std::string const& s, Color c)
+void VirtualLine::set(string const& s, Color c)
 {
     pixels.clear();
     for (auto&& it: s)
@@ -60,7 +60,7 @@ void VirtualLine::set(std::string const& s, Color c)
     }
 }
 
-void VirtualLine::append(std::string const& s, Color c)
+void VirtualLine::append(string const& s, Color c)
 {
     for (auto&& it: s)
     {
@@ -125,10 +125,18 @@ void VirtualListNode::Render(Screen& screen)
     else
         col += 1;
 
+    int col_flag = -1;
+    if (m_options.show_flags)
+    {
+        col_flag = col;
+        col += 2;
+    }
+
+
     if (m_options.show_line_numbers)
         col = renderLineNumbers(col, screen);
 
-    col = renderLine(col, screen);
+    col = renderLine(col, col_flag, screen);
 }
 
 int VirtualListNode::renderScrollBar(int col, Screen& screen)
@@ -209,7 +217,7 @@ int VirtualListNode::renderLineNumbers(int col, Screen& screen)
     return col + m_lineno_width;
 }
 
-int VirtualListNode::renderLine(int col, Screen& screen)
+int VirtualListNode::renderLine(int col, int col_flag, Screen& screen)
 {
     int vsz = visibleLineCount();
 
@@ -218,10 +226,15 @@ int VirtualListNode::renderLine(int col, Screen& screen)
         int row = m_box.y_min + vi;
         int virt_line = m_options.offset() + vi;
 
+
+
         // Get line content from the line view function
         auto line = m_options.view_func ? m_options.view_func(virt_line) : VirtualLine();
-
         line.render(m_box.x_max, col, row, screen);
+
+        // Render flag (if applicable)
+        if (col_flag >= 0)
+            screen.PixelAt(col_flag, row) = line.flag;
     }
 
     return m_box.x_max+1;

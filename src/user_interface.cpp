@@ -140,10 +140,11 @@ void UserInterface::refreshNewNames()
         {
             auto&& it = m_names[i];
 
-            fmt::State fmt_state {
+            fmt::Expression::State fmt_state {
                 .original = it.textOld(),
                 .matches = { },
                 .index = static_cast<int>(i),
+                .total = static_cast<int>(m_names.size())
             };
 
             it.setTextNew(m_expression.getResult(fmt_state).text);

@@ -127,9 +127,10 @@ void UserInterfaceSed::refreshNewNames(fmt::Expression& expr)
         {
             auto&& it = m_names[i];
 
-            fmt::State fmt_state {
+            fmt::Expression::State fmt_state {
                 .original = it.textOld(),
                 .index = static_cast<int>(i),
+                .total = static_cast<int>(m_names.size()),
             };
 
             it.setTextNew(expr.getResult(fmt_state).text);
@@ -167,55 +168,9 @@ void UserInterfaceSed::changeArming()
     setWarn("Press Enter again to confirm");
 }
 
-/*
-TODO: Resizing
-
-- set initial position to just enough for old text, with a margin
-- if left split is too small to fit old text, display an error icon in split, message below
-- if right split is too small to fit new text, display an error icon in split, message below
-- read text() code, see if it's doing anything when it doesn't have enough space (feels like it does, and i want to change that behavior, elipsis or otherwise)
-
-- read frame() code, start considering fully custom renderer / component for names list
-*/
-
-// VirtualLine getVirtualLineOld(Name const& n, regex const& r)
-// {
-//     static vector<Color::Palette16> colors = {
-//         Color::RedLight,
-//         Color::GreenLight,
-//         Color::YellowLight,
-//         Color::BlueLight,
-//         Color::MagentaLight,
-//         Color::CyanLight
-//     };
-//
-//     VirtualLine vl;
-//
-//     size_t col=0;
-//
-//     for (auto&& it: n.getSubsOld(r))
-//     {
-//         for (auto&& jt: strview(n.textOld(), {it.begin, it.end}))
-//         {
-//             Pixel p;
-//             p.character = jt;
-//
-//             p.inverted = it.type == Name::EM_MATCH;
-//             if (it.type == Name::EM_MATCH)
-//                 p.foreground_color = Color(colors[col]);
-//             vl.pixels.push_back(p);
-//         }
-//
-//         if (it.type == Name::EM_MATCH)
-//             col = (col + 1) % colors.size();
-//     }
-//
-//     return vl;
-// }
 
 int UserInterfaceSed::run(NameList const& name_list)
 {
-
 
     auto screen = ScreenInteractive::Fullscreen();
     auto render_time = 0_seconds;
@@ -236,6 +191,7 @@ int UserInterfaceSed::run(NameList const& name_list)
 
         .show_scrollbar = true,
         .show_line_numbers = true,
+        .show_flags = false,
         .offset = &vlist_old_offset,
         .view_count = (int)m_names.size(),
         .view_func = [&](int i)
@@ -254,14 +210,22 @@ int UserInterfaceSed::run(NameList const& name_list)
 
         .show_scrollbar = false,
         .show_line_numbers = false,
+        .show_flags = true,
         .offset = &vlist_new_offset,
         .view_count = (int)m_names.size(),
         .view_func = [&](int i)
         {
-            auto res = find_replace.getReplaceResult(m_names[i].textOld());
+            FindReplace::State state {
+                .index = static_cast<int>(i),
+                .total = static_cast<int>(m_names.size())
+            };
+
+            auto res = find_replace.getReplaceResult(m_names[i].textOld(), state);
             auto p = Pixel();
 
             auto vl = getVirtualLine(res.replace_text, res.replace_emlist, p);
+            vl.flag.character = "•";
+            vl.flag.dim = true;
             return vl;
         }
 

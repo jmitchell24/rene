@@ -19,7 +19,7 @@ using namespace std;
 // FindReplace - Impl
 //
 
-FindReplace::ReplaceResult FindReplace::getReplaceResult(strparam s) const
+FindReplace::ReplaceResult FindReplace::getReplaceResult(strparam s, State const& state) const
 {
     auto rb = cregex_iterator(s.begin(), s.end(), m_find);
     auto re = cregex_iterator();
@@ -45,12 +45,13 @@ FindReplace::ReplaceResult FindReplace::getReplaceResult(strparam s) const
     if (size_t end = s.size(); last < end)
         find_emlist.push_back({Em::NONE, last, end});
 
-    fmt::State state;
-    state.matches = std::move(matches);
-    state.index = 0;
-    state.original = s.str();
+    fmt::Expression::State fmt_state;
+    fmt_state.matches = std::move(matches);
+    fmt_state.index = state.index;
+    fmt_state.total = state.total;
+    fmt_state.original = s.str();
 
-    auto res = m_replace.getResult(state);
+    auto res = m_replace.getResult(fmt_state);
 
     return { res.text, res.emlist, find_emlist };
 }

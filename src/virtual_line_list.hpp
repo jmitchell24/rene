@@ -29,6 +29,7 @@ namespace ftxui
     /// For use with VirtualLineList.
     struct VirtualLine
     {
+        Pixel flag;
         std::vector<Pixel> pixels;
 
         inline VirtualLine()
@@ -57,6 +58,8 @@ namespace ftxui
         bool show_scrollbar = true;
 
         bool show_line_numbers = true;
+
+        bool show_flags = true;
 
         Ref<int> offset = int(0);
 
@@ -96,7 +99,7 @@ namespace ftxui
 
         int renderScrollBar(int col, Screen& screen);
         int renderLineNumbers(int col, Screen& screen);
-        int renderLine(int col, Screen& screen);
+        int renderLine(int col, int col_flag, Screen& screen);
 
         void sanitizeOptions();
         int visibleLineCount() const;

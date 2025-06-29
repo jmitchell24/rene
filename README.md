@@ -14,7 +14,7 @@
 
 **A powerful, minimalist file auto-namer.**
 
-![Project Screenshot](/img//2025-05-22_screenshot.png)
+![Project Screenshot](/img//2025-06-29_screenshot.png)
 
 ## Features
 
@@ -82,6 +82,7 @@ rene --version
 | `[name]`           | print original file name WITHOUT extension                  |
 | `[ext]`            | print extension of original file name                       |
 | `[index <offset>]` | print index of current file name with offset (default 0)    | 
+| `[total]`          | print total count of files                                  |
 | `[match <index>]`  | print match of index in 'find and replace' mode (default 0) |
 | `[fuzz]`           | print a random word _(for debug purposes only)_             |
 
@@ -91,6 +92,7 @@ rene --version
 
 - [x] Initial release with core functionality (MVP)
 - [ ] 'find and replace mode', similar to the unix program 'sed'
+- [ ] File type awareness (e.g. width/height templates for images)
 - [ ] Expansion of command-line and terminal-based features 
 - [ ] Desktop GUI
 

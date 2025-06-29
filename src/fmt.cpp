@@ -86,6 +86,9 @@ Var fieldToVar(TextField const& tf)
     if (args[0] == "index")
         return { varIndex(args) };
 
+    if (args[0] == "total")
+        return { VarTotal {} };
+
     if (args[0] == "match")
         return { varMatch(args) };
 
@@ -147,15 +150,16 @@ Expression::Result Expression::getResult(State const& state) const
             case Var::ORIGINAL_EXT: APPEND(state.originalExt(), Em::VAR); break;
             case Var::ORIGINAL_NAME: APPEND(state.originalName(), Em::VAR); break;
             case Var::INDEX: APPEND(to_string(state.index + it.asIndex().offset), Em::VAR); break;
+            case Var::TOTAL: APPEND(to_string(state.total), Em::VAR); break;
             case Var::FUZZ: APPEND(getRandomFakeWord(state.index), Em::VAR); break;
 
 
-        case Var::MATCH:
-            if (size_t i = it.asMatch().index; i < state.matches.size())
-            {
-                APPEND(state.matches[i].view(state.original).str(), Em::MATCH);
-            }
-            break;
+            case Var::MATCH:
+                if (size_t i = it.asMatch().index; i < state.matches.size())
+                {
+                    APPEND(state.matches[i].view(state.original).str(), Em::MATCH);
+                }
+                break;
 
             default:nopath_case(Var::Kind);
         }
