@@ -46,6 +46,7 @@ namespace rene
         bool anyFlag(Args&&... args) const
         { return (flag(args) || ...); }
 
+
         bool parse(int argc, char** argv);
         void dbgPrint();
 

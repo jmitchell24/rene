@@ -66,10 +66,21 @@ bool CmdArgs::tryGetPositional(size_t index, string& value) const
     return false;
 }
 
+bool CmdArgs::tryGetNamed(string const& name, string& value) const
+{
+    if (auto it = m_named_args.find(name); it != m_named_args.end())
+    {
+        value = it->second;
+        return true;
+    }
+    return false;
+}
+
 bool CmdArgs::parse(int argc, char** argv)
 {
     positional_args_type pargs;
     named_args_type nargs;
+    flags_type flags;
     string pname;
 
     m_positional_args.clear();
@@ -93,29 +104,64 @@ bool CmdArgs::parse(int argc, char** argv)
         if (arg.beginsWith("--"))
         {
             auto narg = arg.skip(2).str();
-            if (++i < argc)
-                nargs[narg] = argv[i];
+
+            // Check if this is an argument with an equals sign (--key=value)
+            auto eq_pos = narg.find('=');
+            if (eq_pos != string::npos)
+            {
+                auto key = narg.substr(0, eq_pos);
+                auto value = narg.substr(eq_pos + 1);
+                nargs[key] = value;
+                continue;
+            }
+
+            // Check if next argument exists and doesn't start with '-'
+            if (i + 1 < argc && !cstrview(argv[i + 1]).beginsWith("-"))
+            {
+                nargs[narg] = argv[++i];
+            }
             else
-                m_flags.insert(narg);
+            {
+                flags.insert(narg);
+            }
             continue;
         }
 
         if (arg.beginsWith("-"))
         {
             auto narg = arg.skip(1).str();
-            if (++i < argc)
-                nargs[narg] = argv[i];
+
+            // Handle single character flags that might be combined (e.g., -abc)
+            if (narg.length() > 1 && (i + 1 >= argc || cstrview(argv[i + 1]).beginsWith("-")))
+            {
+                // Treat as multiple single-character flags
+                for (char c : narg)
+                {
+                    flags.insert(string(1, c));
+                }
+                continue;
+            }
+
+            // Check if next argument exists and doesn't start with '-'
+            if (i + 1 < argc && !cstrview(argv[i + 1]).beginsWith("-"))
+            {
+                nargs[narg] = argv[++i];
+            }
             else
-                m_flags.insert(narg);
+            {
+                flags.insert(narg);
+            }
             continue;
         }
 
+        // Positional argument
         pargs.push_back(arg.str());
     }
 
     m_program_name      = pname;
     m_positional_args   = move(pargs);
     m_named_args        = move(nargs);
+    m_flags             = move(flags);
     m_valid             = true;
     return true;
 }

@@ -44,13 +44,13 @@ int main(int argc, char** argv)
         return EXIT_SUCCESS;
     }
 
-    if (args.flagSedMode())
-    {
-
-        NameList nl;
-        nl.loadDummies(100);
-        return UserInterfaceSed::instance().run(nl);
-    }
+    // if (args.flagSedMode())
+    // {
+    //
+    //     NameList nl;
+    //     nl.loadDummies(100);
+    //     return UserInterfaceSed::instance().run(nl);
+    // }
 
     if (string arg; args.tryGetPositional(0, arg))
     {

@@ -352,7 +352,7 @@ int UserInterfaceSed::run(NameList const& name_list)
     while (!loop.HasQuitted())
     {
         auto scoped_timer = timer::scope(render_time);
-        loop.RunOnce();
+        loop.RunOnceBlocking();
     }
 
     return EXIT_SUCCESS;
