@@ -48,7 +48,7 @@ VirtualLine getVirtualLine(strparam s, emlist_type const& emlist, Pixel p_em = {
     VirtualLine vl;
     for (auto& it: emlist)
     {
-        for (auto&& jt: s.withIndices(it.begin, it.end))
+        for (auto&& jt: s.withExactIndices(it.begin, it.end))
         {
             switch (it.kind)
             {

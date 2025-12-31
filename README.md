@@ -1,4 +1,9 @@
-# René, file auto-namer 
+<p align="center">
+  <img src="/img/icon-128.png" />
+</p>
+
+
+# René, file auto-namer
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE.txt)
 ![Last Commit](https://img.shields.io/github/last-commit/jmitchell24/rene)
@@ -7,9 +12,7 @@
 
 [![GitHub Release](https://img.shields.io/github/v/release/jmitchell24/rene?include_prereleases)](https://github.com/jmitchell24/rene/releases)
 [![Issues](https://img.shields.io/github/issues/jmitchell24/rene)](https://github.com/jmitchell24/rene/issues)
-[![Stars](https://img.shields.io/github/stars/jmitchell24/rene)](https://github.com/username/project-name/stargazers)
-
-
+[![Stars](https://img.shields.io/github/stars/jmitchell24/rene)](https://github.com/username/rene/stargazers)
 
 
 **A powerful, minimalist file auto-namer.**

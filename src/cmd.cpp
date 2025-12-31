@@ -168,8 +168,6 @@ bool CmdArgs::parse(int argc, char** argv)
 
 void CmdArgs::dbgPrint()
 {
-    using namespace ut::tui;
-
 
 
     cout << endl;
